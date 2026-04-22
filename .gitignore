@@ -4,3 +4,10 @@
 # React Router
 /.react-router/
 /build/
+
+# Environment variables - JANGAN commit ke Git
+.env
+.env.local
+.env.production
+.env.*
+!.env.example

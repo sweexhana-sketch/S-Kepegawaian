@@ -7,7 +7,7 @@ import CreateAuth from "@auth/create"
 import Credentials from "@auth/core/providers/credentials"
 import { CredentialsSignin } from '@auth/core/errors'
 import { Pool } from '@neondatabase/serverless'
-import { hash, verify } from 'argon2'
+import { hash, compare as verify } from 'bcryptjs'
 
 function Adapter(client) {
   return {
