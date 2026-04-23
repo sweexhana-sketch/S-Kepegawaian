@@ -66,15 +66,22 @@ export default defineConfig({
     tsconfigPaths(),
     aliases(),
     layoutWrapperPlugin(),
-    {
-      name: 'force-exit',
-      closeBundle() {
-        if (process.env.NODE_ENV === 'production') {
-          console.log('Build finished, forcing exit to prevent timeout...');
-          setTimeout(() => process.exit(0), 500);
-        }
-      },
-    },
+    (() => {
+      let bundleCount = 0;
+      return {
+        name: 'force-exit',
+        writeBundle() {
+          if (process.env.NODE_ENV === 'production') {
+            bundleCount++;
+            console.log(`Bundle ${bundleCount} written to disk.`);
+            if (bundleCount >= 2) {
+              console.log('All bundles written. Forcing exit...');
+              setTimeout(() => process.exit(0), 1000);
+            }
+          }
+        },
+      };
+    })(),
   ],
   resolve: {
     alias: {
