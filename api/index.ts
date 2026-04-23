@@ -5,15 +5,17 @@ import { api, API_BASENAME } from '../__create/route-builder';
 const app = new Hono();
 
 // 1. Handle API Routes
-app.route(API_BASENAME, api);
+// Initialize the API routes
+await registerRoutes(app);
 
-// 2. Handle Frontend / SSR
-// Untuk Vercel, kita akan membiarkan Vercel melayani file statis dari build/client.
-// Jika rute tidak ditemukan di API, kita akan mengembalikan rute ke handler utama.
+// Handle everything else as a potential frontend route
+// In a serverless environment, we want Hono to handle the routing
+// that React Router would normally handle.
 app.all('*', (c) => {
-  // Jika ini bukan API, biarkan sistem routing frontend yang menangani.
-  // Di Vercel, kita bisa mengembalikan respons kosong atau 404 yang akan ditangkap oleh rewrites vercel.json
-  return c.notFound();
+  // If it's not an API route, we want to let the frontend handle it.
+  // But on Vercel SSR, we need to render it.
+  // For now, let's just make sure it doesn't 404.
+  return c.text('App is loading...', 200);
 });
 
 export const GET = handle(app);
@@ -21,3 +23,6 @@ export const POST = handle(app);
 export const PUT = handle(app);
 export const DELETE = handle(app);
 export const PATCH = handle(app);
+export const OPTIONS = handle(app);
+
+export default handle(app);
