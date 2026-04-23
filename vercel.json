@@ -2,13 +2,14 @@
   "version": 2,
   "buildCommand": "npm run build",
   "outputDirectory": "build/client",
-  "routes": [
+  "rewrites": [
     {
-      "handle": "filesystem"
+      "source": "/api/(.*)",
+      "destination": "/api/index"
     },
     {
-      "src": "/(.*)",
-      "dest": "/api/index"
+      "source": "/(.*)",
+      "destination": "/api/index"
     }
   ]
 }

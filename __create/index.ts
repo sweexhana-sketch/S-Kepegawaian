@@ -293,7 +293,11 @@ app.use('/api/auth/*', async (c, next) => {
 });
 app.route(API_BASENAME, api);
 
-export default await createHonoServer({
+export { app };
+
+const server = await createHonoServer({
   app,
   defaultLogger: false,
 });
+
+export default server;
