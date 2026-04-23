@@ -1,16 +1,20 @@
 import { Hono } from 'hono';
 import { handle } from 'hono/vercel';
-// Import your app logic from the create folder
 import { api, API_BASENAME } from '../__create/route-builder';
 
 const app = new Hono();
 
-// Re-use your API routes
+// 1. Handle API Routes
 app.route(API_BASENAME, api);
 
-// Fallback for React Router pages (if needed)
-// On Vercel, static pages in build/client will be served first.
-// If not found, it hits this function.
+// 2. Handle Frontend / SSR
+// Untuk Vercel, kita akan membiarkan Vercel melayani file statis dari build/client.
+// Jika rute tidak ditemukan di API, kita akan mengembalikan rute ke handler utama.
+app.all('*', (c) => {
+  // Jika ini bukan API, biarkan sistem routing frontend yang menangani.
+  // Di Vercel, kita bisa mengembalikan respons kosong atau 404 yang akan ditangkap oleh rewrites vercel.json
+  return c.notFound();
+});
 
 export const GET = handle(app);
 export const POST = handle(app);
