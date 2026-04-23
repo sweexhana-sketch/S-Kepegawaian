@@ -66,6 +66,15 @@ export default defineConfig({
     tsconfigPaths(),
     aliases(),
     layoutWrapperPlugin(),
+    {
+      name: 'force-exit',
+      closeBundle() {
+        if (process.env.NODE_ENV === 'production') {
+          console.log('Build finished, forcing exit to prevent timeout...');
+          setTimeout(() => process.exit(0), 500);
+        }
+      },
+    },
   ],
   resolve: {
     alias: {
