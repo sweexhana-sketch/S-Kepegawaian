@@ -1,4 +1,11 @@
 {
   "buildCommand": "npm run build",
-  "framework": "react-router"
+  "framework": "react-router",
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/"
+    }
+  ]
 }
