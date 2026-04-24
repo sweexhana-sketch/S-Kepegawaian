@@ -1,5 +1,11 @@
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
 import { handle } from 'hono/vercel';
 import { app } from '../__create/app';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const SERVER_BUILD_PATH = resolve(__dirname, '../build/server/index.js');
 
 // Lazy-load the React Router request handler (SSR)
 let _handler: ((req: Request) => Promise<Response>) | null = null;
@@ -8,7 +14,7 @@ async function getRequestHandler() {
   if (!_handler) {
     const [{ createRequestHandler }, build] = await Promise.all([
       import('react-router'),
-      import('../build/server/index.js'),
+      import(SERVER_BUILD_PATH),
     ]);
     _handler = createRequestHandler(build, 'production');
   }
