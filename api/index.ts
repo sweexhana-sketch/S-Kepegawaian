@@ -14,10 +14,21 @@ if (process.env.NODE_ENV === 'production') {
         })();
       }
       const requestHandler = await requestHandlerPromise;
-      return await requestHandler(c.req.raw);
+      
+      const response = await requestHandler(c.req.raw);
+      // Return the response as is
+      return response;
     } catch (e) {
       console.error('React Router handler error:', e);
-      return c.text('Internal Server Error: ' + e.message, 500);
+      return c.html(`
+        <html>
+          <body style="padding: 20px; font-family: monospace;">
+            <h1>Vercel Deployment Error</h1>
+            <p><strong>Error Message:</strong> ${e.message}</p>
+            <pre>${e.stack}</pre>
+          </body>
+        </html>
+      `, 500);
     }
   });
 }
