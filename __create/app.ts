@@ -16,11 +16,9 @@ import { getHTMLForErrorPage } from './get-html-for-error-page';
 import { isAuthAction } from './is-auth-action';
 import { API_BASENAME, api } from './route-builder';
 
-// Use Neon's built-in fetch-based transport for serverless (no ws needed)
-neonConfig.fetchEndpoint = (host) => {
-  const [protocol, port] = ['https', 443];
-  return `${protocol}://${host}:${port}/sql`;
-};
+// Neon serverless: use HTTP/fetch mode (no WebSocket needed on Vercel)
+// @neondatabase/serverless automatically uses fetch when no wsConstructor is set
+neonConfig.poolQueryViaFetch = true;
 
 const als = new AsyncLocalStorage<{ requestId: string }>();
 
