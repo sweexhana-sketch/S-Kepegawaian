@@ -45,7 +45,15 @@ const routeModules = import.meta.glob('../src/app/api/**/route.{js,ts}', {
 function registerRoutes() {
   const methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
   
-  for (const [path, module] of Object.entries(routeModules)) {
+  const sortedEntries = Object.entries(routeModules).sort(([pathA], [pathB]) => {
+    const isParamA = pathA.includes('[');
+    const isParamB = pathB.includes('[');
+    if (isParamA && !isParamB) return 1;
+    if (!isParamA && isParamB) return -1;
+    return pathA.localeCompare(pathB);
+  });
+
+  for (const [path, module] of sortedEntries) {
     const route = module as any;
     const honoPath = getHonoPath(path);
     

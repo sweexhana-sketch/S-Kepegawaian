@@ -85,11 +85,14 @@ for (const method of ['post', 'put', 'patch'] as const) {
   );
 }
 
+console.log("AUTH_SECRET is:", process.env.AUTH_SECRET ? "defined" : "undefined");
 if (process.env.AUTH_SECRET) {
   app.use(
     '*',
     initAuthConfig((c) => ({
-      secret: c.env.AUTH_SECRET,
+      secret: process.env.AUTH_SECRET,
+      trustHost: true,
+      basePath: '/api/auth',
       pages: {
         signIn: '/account/signin',
         signOut: '/account/logout',
@@ -171,7 +174,7 @@ if (process.env.AUTH_SECRET) {
             const accountPassword = matchingAccount?.password;
             if (!accountPassword) return null;
 
-            const isValid = await verify(accountPassword, password);
+            const isValid = await verify(password, accountPassword);
             if (!isValid) return null;
 
             return user;
@@ -187,9 +190,10 @@ if (process.env.AUTH_SECRET) {
             image: { label: 'Image', type: 'text', required: false },
           },
           authorize: async (credentials) => {
+            console.log("Credentials signup authorize called:", credentials);
             const { email, password, name, image } = credentials;
-            if (!email || !password) return null;
-            if (typeof email !== 'string' || typeof password !== 'string') return null;
+            if (!email || !password) { console.log("Missing email or password"); return null; }
+            if (typeof email !== 'string' || typeof password !== 'string') { console.log("Invalid email or password type"); return null; }
 
             const user = await adapter.getUserByEmail(email);
             if (!user) {
@@ -200,7 +204,7 @@ if (process.env.AUTH_SECRET) {
                 image: typeof image === 'string' && image.length > 0 ? image : undefined,
               });
               await adapter.linkAccount({
-                extraData: { password: await hash(password) },
+                extraData: { password: await hash(password, 10) },
                 type: 'credentials',
                 userId: newUser.id,
                 providerAccountId: newUser.id,
@@ -236,11 +240,6 @@ app.all('/integrations/:path{.+}', async (c) => {
   });
 });
 
-app.use('/api/auth/*', async (c, next) => {
-  if (isAuthAction(c.req.path)) {
-    return authHandler()(c, next);
-  }
-  return next();
-});
+app.use('/api/auth/*', authHandler());
 
 app.route(API_BASENAME, api);

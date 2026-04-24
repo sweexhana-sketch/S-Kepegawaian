@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 
 export async function GET(request) {
   try {
-    const session = await auth();
+    const session = await auth(request);
     if (!session || !session.user?.id) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
