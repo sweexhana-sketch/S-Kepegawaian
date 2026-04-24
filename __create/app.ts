@@ -11,13 +11,16 @@ import { proxy } from 'hono/proxy';
 import { bodyLimit } from 'hono/body-limit';
 import { requestId } from 'hono/request-id';
 import { serializeError } from 'serialize-error';
-import ws from 'ws';
 import NeonAdapter from './adapter';
 import { getHTMLForErrorPage } from './get-html-for-error-page';
 import { isAuthAction } from './is-auth-action';
 import { API_BASENAME, api } from './route-builder';
 
-neonConfig.webSocketConstructor = ws;
+// Use Neon's built-in fetch-based transport for serverless (no ws needed)
+neonConfig.fetchEndpoint = (host) => {
+  const [protocol, port] = ['https', 443];
+  return `${protocol}://${host}:${port}/sql`;
+};
 
 const als = new AsyncLocalStorage<{ requestId: string }>();
 
