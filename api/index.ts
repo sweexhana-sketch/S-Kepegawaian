@@ -1,22 +1,25 @@
 import { handle } from 'hono/vercel';
 import { app } from '../__create/app';
 
-// In production, we need to manually attach the React Router request handler
-// because we bypass createHonoServer() (which calls serve() and hangs Vercel).
 if (process.env.NODE_ENV === 'production') {
-  try {
-    const { createRequestHandler } = require('react-router');
-    const build = require('../build/server/index.js');
-    const requestHandler = createRequestHandler(build, 'production');
-    
-    // Catch-all route for React Router
-    app.all('*', async (c) => {
-      // Create a web Request from the Hono Context
-      return requestHandler(c.req.raw);
-    });
-  } catch (e) {
-    console.error('Failed to load React Router build:', e);
-  }
+  let requestHandlerPromise;
+
+  app.all('*', async (c) => {
+    try {
+      if (!requestHandlerPromise) {
+        requestHandlerPromise = (async () => {
+          const reactRouter = await import('react-router');
+          const build = await import('../build/server/index.js');
+          return reactRouter.createRequestHandler(build, 'production');
+        })();
+      }
+      const requestHandler = await requestHandlerPromise;
+      return await requestHandler(c.req.raw);
+    } catch (e) {
+      console.error('React Router handler error:', e);
+      return c.text('Internal Server Error: ' + e.message, 500);
+    }
+  });
 }
 
 export const GET = handle(app);
