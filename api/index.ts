@@ -1,39 +1,27 @@
+import { Hono } from 'hono';
 import { handle } from 'hono/vercel';
-import { app } from '../__create/app';
 
-// Catch-all diagnostic
-app.all('*', async (c) => {
-  const url = c.req.url;
-  console.log(`Request received: ${url}`);
-  
-  if (url.includes('/api/')) {
-    // Let it pass to API routes if needed
-    return;
-  }
+const app = new Hono();
 
-  // Diagnostic message
+app.all('*', (c) => {
   return c.html(`
     <html>
-      <body style="padding: 40px; font-family: sans-serif; line-height: 1.6;">
-        <h1>SIMPEG DIGITAL - Server is Alive</h1>
-        <p>If you see this page, the Vercel Serverless Function is working.</p>
-        <hr/>
-        <ul>
-          <li><strong>URL:</strong> ${url}</li>
-          <li><strong>Method:</strong> ${c.req.method}</li>
-          <li><strong>NODE_ENV:</strong> ${process.env.NODE_ENV}</li>
-        </ul>
-        <p>Attempting to load React Router... (Wait 5 seconds)</p>
-        <script>
-          setTimeout(() => {
-            console.log('Redirecting to check SSR...');
-            // In a real fix, we would attach the SSR here
-          }, 5000);
-        </script>
+      <body style="padding: 50px; font-family: sans-serif; text-align: center;">
+        <h1 style="color: #2563eb;">Vercel Isolation Test: SUCCESS</h1>
+        <p>If you see this, the Vercel function is running correctly without project imports.</p>
+        <p>URL: ${c.req.url}</p>
+        <p>Time: ${new Date().toISOString()}</p>
       </body>
     </html>
   `);
 });
+
+export const GET = handle(app);
+export const POST = handle(app);
+export const PUT = handle(app);
+export const DELETE = handle(app);
+export const PATCH = handle(app);
+export const OPTIONS = handle(app);
 
 export default handle(app);
 
