@@ -4,7 +4,6 @@ import { skipCSRFCheck } from '@auth/core';
 import Credentials from '@auth/core/providers/credentials';
 import { authHandler, initAuthConfig } from '@hono/auth-js';
 import { Pool, neonConfig } from '@neondatabase/serverless';
-import { hash, compare as verify } from 'bcryptjs';
 import { Hono } from 'hono';
 import { contextStorage } from 'hono/context-storage';
 import { cors } from 'hono/cors';
@@ -174,6 +173,7 @@ if (process.env.AUTH_SECRET) {
             const accountPassword = matchingAccount?.password;
             if (!accountPassword) return null;
 
+            const { compare: verify } = await import('bcryptjs');
             const isValid = await verify(password, accountPassword);
             if (!isValid) return null;
 
@@ -203,6 +203,7 @@ if (process.env.AUTH_SECRET) {
                 name: typeof name === 'string' && name.length > 0 ? name : undefined,
                 image: typeof image === 'string' && image.length > 0 ? image : undefined,
               });
+              const { hash } = await import('bcryptjs');
               await adapter.linkAccount({
                 extraData: { password: await hash(password, 10) },
                 type: 'credentials',
