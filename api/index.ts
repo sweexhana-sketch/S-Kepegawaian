@@ -11,8 +11,9 @@ import { handle } from 'hono/vercel';
 import { createRequestHandler } from 'react-router';
 
 // STATIC import — Vercel can trace all transitive dependencies from here
-// This is intentional: dynamic import() breaks @vercel/nft static analysis
-import * as build from '../build/server/index.js';
+// We import from _ssr/ (copied post-build) because Vercel automatically includes
+// everything inside the api/ directory into the serverless bundle.
+import * as build from './_ssr/index.js';
 
 import { app } from '../__create/app';
 
