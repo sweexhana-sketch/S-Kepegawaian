@@ -17,6 +17,16 @@ export default defineConfig({
   build: {
     target: 'esnext'
   },
+  ssr: {
+    // Externalize node-server packages that are NOT available in Vercel's
+    // serverless lambda environment. They must NOT be bundled into SSR output.
+    external: [
+      '@hono/node-server',
+      '@hono/node-server/serve-static',
+      'ws',
+    ],
+    noExternal: [],
+  },
   // Keep them available via import.meta.env.NEXT_PUBLIC_*
   envPrefix: 'NEXT_PUBLIC_',
   optimizeDeps: {

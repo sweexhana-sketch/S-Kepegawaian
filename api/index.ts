@@ -1,45 +1,42 @@
-import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
+/**
+ * api/index.ts - Vercel Serverless Function Entry
+ *
+ * Uses a STATIC import for the React Router SSR build so that
+ * Vercel's static file tracer (@vercel/nft) can automatically detect
+ * and bundle ALL dependencies (including @hono/node-server).
+ *
+ * Dynamic imports break Vercel's file tracer, causing ERR_MODULE_NOT_FOUND.
+ */
 import { handle } from 'hono/vercel';
+import { createRequestHandler } from 'react-router';
+
+// STATIC import — Vercel can trace all transitive dependencies from here
+// This is intentional: dynamic import() breaks @vercel/nft static analysis
+import * as build from '../build/server/index.js';
+
 import { app } from '../__create/app';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const SERVER_BUILD_PATH = resolve(__dirname, '../build/server/index.js');
+// Create the React Router SSR request handler once at module level
+const reactRouterHandler = createRequestHandler(build, 'production');
 
-// Lazy-load the React Router request handler (SSR)
-let _handler: ((req: Request) => Promise<Response>) | null = null;
-
-async function getRequestHandler() {
-  if (!_handler) {
-    const [{ createRequestHandler }, build] = await Promise.all([
-      import('react-router'),
-      import(SERVER_BUILD_PATH),
-    ]);
-    _handler = createRequestHandler(build, 'production');
-  }
-  return _handler;
-}
-
-// Catch-all: serve everything through React Router SSR
+// Mount React Router SSR as catch-all for non-API routes
 app.all('*', async (c) => {
-  // Skip internal API routes — they are already mounted on `app` via route-builder
-  const path = new URL(c.req.url).pathname;
-  if (path.startsWith('/api/')) {
-    // Let the existing Hono routes on `app` handle it
+  const pathname = new URL(c.req.url).pathname;
+
+  // API routes are already handled by the mounted routes on `app`
+  if (pathname.startsWith('/api/')) {
     return c.notFound();
   }
 
   try {
-    const handler = await getRequestHandler();
-    return await handler(c.req.raw);
+    return await reactRouterHandler(c.req.raw);
   } catch (err: any) {
-    console.error('[SSR Error]', err);
+    console.error('[SSR Error]', err?.message, err?.stack);
     return c.html(
-      `<html><body style="font-family:sans-serif;padding:40px">
-        <h2 style="color:#dc2626">Server Rendering Error</h2>
-        <p><strong>${err?.message}</strong></p>
-        <pre style="background:#f1f5f9;padding:16px;border-radius:8px;overflow:auto">${err?.stack}</pre>
+      `<html><body style="font-family:sans-serif;padding:40px;max-width:800px;margin:auto">
+        <h2 style="color:#dc2626">SSR Error — ${err?.message}</h2>
+        <pre style="background:#f1f5f9;padding:16px;border-radius:8px;overflow:auto;font-size:13px">${err?.stack}</pre>
+        <hr/><p style="color:#64748b">Check Vercel logs for more details.</p>
        </body></html>`,
       500,
     );
