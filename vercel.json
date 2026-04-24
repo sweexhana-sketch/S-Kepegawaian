@@ -2,8 +2,14 @@
   "version": 2,
   "buildCommand": "npm run build",
   "outputDirectory": "build/client",
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/api/index" }
+  "rewrites": [
+    {
+      "source": "/(?!api/|assets/|favicon.ico).*",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index"
+    }
   ]
 }
