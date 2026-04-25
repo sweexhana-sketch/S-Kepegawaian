@@ -21,27 +21,51 @@ const reactRouterHandler = createRequestHandler(build, 'production');
 
 // Mount React Router SSR as catch-all for non-API routes
 app.all('*', async (c) => {
-  const pathname = new URL(c.req.url).pathname;
+  const url = new URL(c.req.url);
+  const pathname = url.pathname;
+
+  console.log(`[SSR] Handling request: ${c.req.method} ${pathname}`);
 
   // API routes are already handled by the mounted routes on `app`
   if (pathname.startsWith('/api/')) {
+    console.log(`[SSR] Path ${pathname} starts with /api/, returning 404`);
     return c.notFound();
   }
 
+  console.log(`[SSR] Calling reactRouterHandler for ${pathname}...`);
+  const startTime = Date.now();
+
   try {
-    return await reactRouterHandler(c.req.raw);
+    // Add a manual timeout to prevent the whole function from hanging
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('SSR Timeout (20s reached)')), 20000)
+    );
+
+    const result = await Promise.race([
+      reactRouterHandler(c.req.raw),
+      timeoutPromise
+    ]) as Response;
+
+    const duration = Date.now() - startTime;
+    console.log(`[SSR] reactRouterHandler finished in ${duration}ms with status ${result.status}`);
+    return result;
   } catch (err: any) {
-    console.error('[SSR Error]', err?.message, err?.stack);
+    const duration = Date.now() - startTime;
+    console.error(`[SSR ERROR] after ${duration}ms:`, err?.message);
+    
     return c.html(
       `<html><body style="font-family:sans-serif;padding:40px;max-width:800px;margin:auto">
         <h2 style="color:#dc2626">SSR Error — ${err?.message}</h2>
-        <pre style="background:#f1f5f9;padding:16px;border-radius:8px;overflow:auto;font-size:13px">${err?.stack}</pre>
+        <p>This error occurred during Server-Side Rendering after ${duration}ms.</p>
+        <pre style="background:#f1f5f9;padding:16px;border-radius:8px;overflow:auto;font-size:13px">${err?.stack || 'No stack trace available'}</pre>
         <hr/><p style="color:#64748b">Check Vercel logs for more details.</p>
        </body></html>`,
       500,
     );
   }
 });
+
+console.log('Server initialization complete. DATABASE_URL is', process.env.DATABASE_URL ? 'PRESENT' : 'MISSING');
 
 // Vercel Serverless Functions running in Node.js ONLY need the default export.
 // Do not use hono/vercel's handle() as it causes 504 timeouts on Node 20.
