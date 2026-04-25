@@ -25,8 +25,6 @@ async function bundleServer() {
     treeShaking: true,
     outfile: resolve(__dirname, '../api/index.js'),
     external: [
-      '../build/server/*',
-      './build/server/*',
       'hono',
       'hono/*',
       'react-router',
@@ -34,7 +32,8 @@ async function bundleServer() {
       '@neondatabase/serverless',
       'bcryptjs',
       '@auth/core',
-      'serialize-error'
+      'serialize-error',
+      'node:*'
     ],
   });
   
