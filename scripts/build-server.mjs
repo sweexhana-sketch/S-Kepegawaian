@@ -23,6 +23,9 @@ async function bundleServer() {
     format: 'esm',
     minify: true,
     treeShaking: true,
+    banner: {
+      js: `import { createRequire } from 'module'; const require = createRequire(import.meta.url);`,
+    },
     outfile: resolve(__dirname, '../api/index.js'),
     external: [
       'hono',
