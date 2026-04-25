@@ -5,34 +5,39 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export default function handler(req, res) {
-  let output = {};
+export default async function handler(req, res) {
+  let output = {
+    results: {},
+    errors: {}
+  };
   
-  function safeReadDir(dir) {
-    try {
-      if (fs.existsSync(dir)) {
-        return fs.readdirSync(dir);
-      } else {
-        return ['DOES_NOT_EXIST'];
+  try {
+    const pkgPath = path.resolve(__dirname, '../package.json');
+    if (fs.existsSync(pkgPath)) {
+      const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+      const deps = Object.keys(pkg.dependencies || {});
+      
+      output['total_deps'] = deps.length;
+      
+      for (const dep of deps) {
+        try {
+          // Attempt to import the module
+          await import(dep);
+          output.results[dep] = 'OK';
+        } catch (err) {
+          output.results[dep] = 'FAIL';
+          output.errors[dep] = err.message;
+        }
       }
-    } catch (e) {
-      return [`ERROR: ${e.message}`];
+    } else {
+      output['pkg_error'] = 'package.json not found at ' + pkgPath;
+      // also just list /var/task
+      output['/var/task'] = fs.readdirSync('/var/task');
+      output['/var/task/node_modules'] = fs.existsSync('/var/task/node_modules') ? fs.readdirSync('/var/task/node_modules') : 'MISSING';
     }
+  } catch (e) {
+    output['fatal_error'] = e.message;
   }
-
-  output['__dirname'] = __dirname;
-  output['process.cwd'] = process.cwd();
-  
-  output['/var/task'] = safeReadDir('/var/task');
-  output['/var/task/apps'] = safeReadDir('/var/task/apps');
-  output['/var/task/apps/web'] = safeReadDir('/var/task/apps/web');
-  output['/var/task/apps/web/api'] = safeReadDir('/var/task/apps/web/api');
-  output['/var/task/apps/web/api/_ssr'] = safeReadDir('/var/task/apps/web/api/_ssr');
-  output['/var/task/apps/web/build'] = safeReadDir('/var/task/apps/web/build');
-  output['/var/task/apps/web/build/server'] = safeReadDir('/var/task/apps/web/build/server');
-  
-  // check if neon serverless is installed
-  output['neon_serverless_installed'] = fs.existsSync('/var/task/apps/web/node_modules/@neondatabase/serverless');
 
   res.status(200).json(output);
 }
