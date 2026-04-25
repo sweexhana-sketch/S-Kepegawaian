@@ -21,9 +21,9 @@ async function bundleServer() {
     platform: 'node',
     target: 'node20',
     format: 'esm',
+    minify: true,
+    treeShaking: true,
     outfile: resolve(__dirname, '../api/index.js'),
-    // Externalize ALL node_modules so Vercel NFT can trace them properly
-    // Also externalize the react-router build
     external: [
       '../build/server/*',
       './build/server/*',
