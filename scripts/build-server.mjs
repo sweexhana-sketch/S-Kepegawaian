@@ -23,20 +23,17 @@ async function bundleServer() {
     format: 'esm',
     minify: true,
     treeShaking: true,
+    define: {
+      'process.env.NODE_ENV': '"production"',
+    },
     banner: {
       js: `import { createRequire } from 'module'; const require = createRequire(import.meta.url);`,
     },
     outfile: resolve(__dirname, '../api/index.js'),
     external: [
-      'hono',
-      'hono/*',
-      'react-router',
-      '@hono/*',
+      'node:*',
       '@neondatabase/serverless',
       'bcryptjs',
-      '@auth/core',
-      'serialize-error',
-      'node:*'
     ],
   });
   
