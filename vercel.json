@@ -5,10 +5,9 @@
   "framework": null,
   "outputDirectory": "build/client",
   "functions": {
-    "api/index.ts": {
+    "api/index.js": {
       "memory": 512,
-      "maxDuration": 30,
-      "includeFiles": "build/**"
+      "maxDuration": 30
     }
   },
   "routes": [
