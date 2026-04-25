@@ -1,5 +1,6 @@
 // server/index.ts
-import { handle } from "hono/vercel";
+import { Hono as Hono3 } from "hono";
+import { getRequestListener } from "@hono/node-server";
 import { createRequestHandler } from "react-router";
 import * as build from "../build/server/index.js";
 
@@ -649,27 +650,41 @@ app.use("/api/auth/*", authHandler());
 app.route(API_BASENAME, api);
 
 // server/index.ts
+var app2 = new Hono3();
+app2.route("/", app);
 var reactRouterHandler = createRequestHandler(build, "production");
-app.all("*", async (c) => {
-  const pathname = new URL(c.req.url).pathname;
+app2.all("*", async (c) => {
+  const url = new URL(c.req.url);
+  const pathname = url.pathname;
+  console.log(`[SSR ENTRY] Handling: ${c.req.method} ${pathname}`);
   if (pathname.startsWith("/api/")) {
     return c.notFound();
   }
+  console.log(`[SSR ENTRY] Invoking React Router for ${pathname}...`);
+  const startTime = Date.now();
   try {
-    return await reactRouterHandler(c.req.raw);
+    const timeoutPromise = new Promise(
+      (_, reject) => setTimeout(() => reject(new Error("SSR Timeout (15s reached)")), 15e3)
+    );
+    const result = await Promise.race([
+      reactRouterHandler(c.req.raw),
+      timeoutPromise
+    ]);
+    console.log(`[SSR ENTRY] Finished in ${Date.now() - startTime}ms`);
+    return result;
   } catch (err) {
-    console.error("[SSR Error]", err?.message, err?.stack);
+    console.error(`[SSR ENTRY ERROR]:`, err?.message);
     return c.html(
       `<html><body style="font-family:sans-serif;padding:40px;max-width:800px;margin:auto">
-        <h2 style="color:#dc2626">SSR Error \u2014 ${err?.message}</h2>
+        <h2 style="color:#dc2626">SSR Execution Error \u2014 ${err?.message}</h2>
         <pre style="background:#f1f5f9;padding:16px;border-radius:8px;overflow:auto;font-size:13px">${err?.stack}</pre>
-        <hr/><p style="color:#64748b">Check Vercel logs for more details.</p>
        </body></html>`,
       500
     );
   }
 });
-var index_default = handle(app);
+console.log("Server initialization complete. DATABASE_URL is", process.env.DATABASE_URL ? "PRESENT" : "MISSING");
+var index_default = getRequestListener(app2.fetch);
 export {
   index_default as default
 };
