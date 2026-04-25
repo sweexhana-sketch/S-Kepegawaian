@@ -23,9 +23,18 @@ async function bundleServer() {
     format: 'esm',
     minify: true,
     treeShaking: true,
+    conditions: ['production', 'node', 'import'],
     define: {
       'process.env.NODE_ENV': '"production"',
     },
+    plugins: [{
+      name: 'force-production',
+      setup(build) {
+        build.onResolve({ filter: /react-router\/dist\/development\/dom-export\.js/ }, args => {
+          return { path: resolve(__dirname, '../node_modules/react-router/dist/production/dom-export.js') }
+        })
+      },
+    }],
     banner: {
       js: `import { createRequire } from 'module'; const require = createRequire(import.meta.url);`,
     },
