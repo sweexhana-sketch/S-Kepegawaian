@@ -52,6 +52,18 @@ app.use('*', (c, next) => {
 app.use(contextStorage());
 
 app.onError((err, c) => {
+  console.error('[HONO ERROR]', err);
+  
+  if (c.req.path.startsWith('/api/')) {
+    return c.json(
+      {
+        error: err.message || 'An error occurred in your app',
+        details: serializeError(err),
+      },
+      500
+    );
+  }
+
   if (c.req.method !== 'GET') {
     return c.json(
       {
