@@ -19,17 +19,31 @@ export async function POST(request) {
     }
 
     const userId = session.user.id;
+    const userEmail = session.user.email;
+    const isAdminEmail = userEmail === 'calvinpapua05@gmail.com';
 
     // Check if pegawai exists with this NIP
-    const pegawaiRows = await sql`
+    let pegawaiRows = await sql`
       SELECT * FROM pegawai WHERE nip = ${nip} LIMIT 1
     `;
 
     if (pegawaiRows.length === 0) {
-      return Response.json(
-        { error: "NIP tidak ditemukan dalam database" },
-        { status: 404 },
-      );
+      if (isAdminEmail) {
+        // Automatically create admin record if NIP not found but email is admin
+        await sql`
+          INSERT INTO pegawai (
+            nip, nama_lengkap, email, role, is_active, user_id
+          ) VALUES (
+            ${nip}, ${session.user.name || 'Admin'}, ${userEmail}, 'admin', true, ${userId}
+          )
+        `;
+        pegawaiRows = await sql`SELECT * FROM pegawai WHERE nip = ${nip} LIMIT 1`;
+      } else {
+        return Response.json(
+          { error: "NIP tidak ditemukan dalam database" },
+          { status: 404 },
+        );
+      }
     }
 
     const pegawai = pegawaiRows[0];
@@ -42,18 +56,21 @@ export async function POST(request) {
       );
     }
 
-    // Link the user_id to pegawai
+    // Link the user_id to pegawai and ensure role is admin if email matches
     await sql`
       UPDATE pegawai 
-      SET user_id = ${userId}, updated_at = CURRENT_TIMESTAMP
+      SET 
+        user_id = ${userId}, 
+        role = ${isAdminEmail ? 'admin' : pegawai.role},
+        updated_at = CURRENT_TIMESTAMP
       WHERE nip = ${nip}
     `;
 
     // Also update the email if it's different
-    if (session.user.email && pegawai.email !== session.user.email) {
+    if (userEmail && pegawai.email !== userEmail) {
       await sql`
         UPDATE pegawai 
-        SET email = ${session.user.email}
+        SET email = ${userEmail}
         WHERE nip = ${nip}
       `;
     }
@@ -64,7 +81,7 @@ export async function POST(request) {
       pegawai: {
         nip: pegawai.nip,
         nama_lengkap: pegawai.nama_lengkap,
-        role: pegawai.role,
+        role: isAdminEmail ? 'admin' : pegawai.role,
       },
     });
   } catch (err) {
