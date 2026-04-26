@@ -117,7 +117,11 @@ export default async function(req: any, res: any) {
   } catch (err: any) {
     console.error(`[PRO-SSR ERROR] at ${pathname}:`, err);
     if (!res.writableEnded) {
-      res.status(500).end(`SSR Execution Failed: ${err?.message || 'Unknown Error'}`);
+      if (pathname.startsWith('/api/')) {
+        res.status(500).json({ error: err?.message || 'Internal Server Error' });
+      } else {
+        res.status(500).end(`SSR Execution Failed: ${err?.message || 'Unknown Error'}`);
+      }
     }
   }
 }

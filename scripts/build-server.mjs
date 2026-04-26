@@ -113,8 +113,6 @@ async function bundleServer() {
     outfile: resolve(__dirname, '../api/index.js'),
     external: [
       'node:*',
-      '@neondatabase/serverless',
-      'bcryptjs',
     ],
   });
   
