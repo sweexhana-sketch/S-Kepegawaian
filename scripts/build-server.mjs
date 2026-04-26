@@ -61,30 +61,49 @@ async function bundleServer() {
     {
       name: 'import-meta-glob',
       setup(build) {
-        build.onLoad({ filter: /route-builder\.ts$/ }, async (args) => {
-          console.log('[PLUGIN] Intercepted:', args.path);
+        build.onLoad({ filter: /\.[jt]sx?$/ }, async (args) => {
           let contents = await fs.promises.readFile(args.path, 'utf8');
           if (contents.includes('import.meta.glob')) {
-            const apiDir = resolve(__dirname, '../src/app/api');
-            const files = fg.sync('**/route.{js,ts}', { cwd: apiDir });
+            console.log('[PLUGIN] Patching glob in:', args.path);
             
-            let importCode = '';
-            let objectEntries = [];
+            const importStatements = [];
             
-            files.forEach((file, index) => {
-              const moduleName = `__route_${index}`;
-              const filePath = `../src/app/api/${file}`;
-              importCode += `import * as ${moduleName} from '${filePath}';\n`;
-              objectEntries.push(`'../src/app/api/${file}': ${moduleName}`);
+            contents = contents.replace(/import\.meta\.glob\(['"](.+?)['"](?:,\s*\{([\s\S]*?)\})?\)/g, (fullMatch, pattern, optionsStr) => {
+              const options = optionsStr || '';
+              const isEager = options.includes('eager: true');
+              
+              const baseDir = dirname(args.path);
+              const files = fg.sync(pattern, { cwd: baseDir });
+              console.log(`[PLUGIN] Found ${files.length} files for pattern "${pattern}" in ${baseDir}`);
+              
+              let replacement = '{';
+              
+              files.forEach((file, index) => {
+                const moduleName = `__glob_${Math.random().toString(36).slice(2)}_${index}`;
+                const relativePath = file.startsWith('.') ? file : `./${file}`;
+                
+                if (isEager) {
+                  importStatements.push(`import * as ${moduleName} from '${relativePath}';`);
+                  replacement += `'${file}': ${moduleName},`;
+                } else {
+                  replacement += `'${file}': () => import('${relativePath}'),`;
+                }
+              });
+              
+              replacement += '}';
+              console.log(`[PLUGIN] Replacement: ${replacement.slice(0, 100)}...`);
+              return `(${replacement})`;
             });
 
-            const globReplacement = `{${objectEntries.join(', ')}}`;
-            contents = importCode + '\n' + contents.replace(
-              /import\.meta\.glob\([\s\S]+?\)/g, 
-              globReplacement
-            );
+            contents = importStatements.join('\n') + '\n' + contents;
           }
-          return { contents, loader: 'ts' };
+          
+          let loader = 'js';
+          if (args.path.endsWith('.tsx')) loader = 'tsx';
+          else if (args.path.endsWith('.ts')) loader = 'ts';
+          else if (args.path.endsWith('.jsx')) loader = 'jsx';
+          
+          return { contents, loader };
         });
       }
     }],

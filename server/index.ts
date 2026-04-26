@@ -16,6 +16,34 @@ const reactRouterHandler = createRequestHandler(build, 'production');
 const apiRequestHandler = getRequestListener(apiApp.fetch);
 
 /**
+ * Helper: Konversi Node.js req ke Web Standard Request
+ */
+function createWebRequest(req: any): Request {
+  const host = req.headers.host || 'localhost';
+  const protocol = req.headers['x-forwarded-proto'] || 'http';
+  const url = new URL(req.url, `${protocol}://${host}`);
+
+  const headers = new Headers();
+  for (const [key, value] of Object.entries(req.headers)) {
+    if (value) {
+      if (Array.isArray(value)) {
+        for (const v of value) headers.append(key, v);
+      } else {
+        headers.set(key, value as string);
+      }
+    }
+  }
+
+  return new Request(url.href, {
+    method: req.method,
+    headers,
+    body: req.method !== 'GET' && req.method !== 'HEAD' ? req : undefined,
+    // @ts-ignore
+    duplex: 'half',
+  });
+}
+
+/**
  * Vercel Serverless Function Handler
  */
 export default async function(req: any, res: any) {
@@ -35,6 +63,13 @@ export default async function(req: any, res: any) {
     }
   }
 
+  // --- FILTER: STATIC ASSETS (Jika terlewat dari filesystem) ---
+  if (pathname.match(/\.(ico|png|jpg|jpeg|svg|css|js|map|json|txt|woff2?)$/i)) {
+     console.log(`[PRO-SSR] Skipping static asset: ${pathname}`);
+     res.status(404).end('Not Found');
+     return;
+  }
+
   // --- JALUR 2: SSR ROUTES (Halaman Utama / Frontend) ---
   console.log(`[PRO-SSR] Executing render for: ${pathname}`);
   const startTime = Date.now();
@@ -48,8 +83,11 @@ export default async function(req: any, res: any) {
        }
     }, 10000);
 
+    // Konversi ke Web Request
+    const webRequest = createWebRequest(req);
+
     // Jalankan React Router Handler
-    const result = await reactRouterHandler(req);
+    const result = await reactRouterHandler(webRequest);
     
     clearTimeout(timeout);
 
@@ -63,7 +101,6 @@ export default async function(req: any, res: any) {
 
     // Transfer Body (Streaming support)
     if (result.body) {
-      // Node.js 18+ can pipe Web Streams to ServerResponse
       const reader = result.body.getReader();
       while (true) {
         const { done, value } = await reader.read();
@@ -78,9 +115,9 @@ export default async function(req: any, res: any) {
     console.log(`[PRO-SSR] Success: ${pathname} (${Date.now() - startTime}ms)`);
 
   } catch (err: any) {
-    console.error(`[PRO-SSR ERROR] at ${pathname}:`, err?.message);
+    console.error(`[PRO-SSR ERROR] at ${pathname}:`, err);
     if (!res.writableEnded) {
-      res.status(500).end(`SSR Execution Failed: ${err?.message}`);
+      res.status(500).end(`SSR Execution Failed: ${err?.message || 'Unknown Error'}`);
     }
   }
 }
