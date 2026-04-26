@@ -11,14 +11,24 @@ if (!dbUrl && fs.existsSync('.env')) {
 const pool = new Pool({ connectionString: dbUrl });
 
 async function check() {
+  const email = 'calvinpapua05@gmail.com';
   try {
-    const res = await pool.query(`
-      SELECT auth_accounts.*, auth_users.email 
-      FROM auth_accounts 
-      JOIN auth_users ON auth_accounts."userId" = auth_users.id 
-      WHERE auth_users.email = 'calvinpapua05@gmail.com'
-    `);
-    console.log(JSON.stringify(res.rows, null, 2));
+    console.log(`Checking database for ${email}...`);
+    
+    const userRes = await pool.query('SELECT * FROM auth_users WHERE email = $1', [email]);
+    console.log('User Record:', JSON.stringify(userRes.rows, null, 2));
+    
+    if (userRes.rowCount > 0) {
+      const userId = userRes.rows[0].id;
+      const accountsRes = await pool.query('SELECT * FROM auth_accounts WHERE "userId" = $1', [userId]);
+      console.log('Account Records:', JSON.stringify(accountsRes.rows, null, 2));
+      
+      const pegawaiRes = await pool.query('SELECT * FROM pegawai WHERE user_id = $1', [userId]);
+      console.log('Pegawai Record:', JSON.stringify(pegawaiRes.rows, null, 2));
+    } else {
+      console.log('User NOT FOUND in auth_users');
+    }
+    
   } catch (err) {
     console.error(err);
   } finally {

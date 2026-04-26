@@ -22,15 +22,21 @@ export default function SignUpPage() {
     }
 
     try {
-      await signUpWithCredentials({
+      const result = await signUpWithCredentials({
         email,
         password,
         name,
         callbackUrl: "/onboarding",
         redirect: true,
       });
+      
+      if (result?.error) {
+        setError(result.error);
+        setLoading(false);
+      }
     } catch (err) {
-      setError("Email sudah terdaftar atau terjadi kesalahan");
+      console.error("Signup error:", err);
+      setError(err?.message || "Terjadi kesalahan saat mendaftar");
       setLoading(false);
     }
   };
