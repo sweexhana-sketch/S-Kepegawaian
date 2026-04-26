@@ -12,6 +12,10 @@ export default async function handler(req, res) {
   };
   
   try {
+    output['db_url_set'] = !!process.env.DATABASE_URL;
+    output['db_url_length'] = process.env.DATABASE_URL?.length || 0;
+    output['env_keys'] = Object.keys(process.env).filter(k => !k.includes('TOKEN') && !k.includes('SECRET'));
+    
     const pkgPath = path.resolve(__dirname, '../package.json');
     if (fs.existsSync(pkgPath)) {
       const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
