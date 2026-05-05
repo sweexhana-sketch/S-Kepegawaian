@@ -83,6 +83,20 @@ export default function HomePage() {
           <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#FFCC00]/10 rounded-full blur-[120px]"></div>
           <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#FFCC00]/5 rounded-full blur-[150px]"></div>
           <div className="absolute inset-0 bg-[radial-gradient(#ffffff05_1px,transparent_1px)] [background-size:32px_32px]"></div>
+          
+          {/* Tiled Pattern - Tilted PUPR Logo */}
+          <div 
+            className="absolute opacity-[0.12]"
+            style={{
+              top: '-50%', left: '-50%', width: '200%', height: '200%',
+              backgroundImage: `url('/pupr.png')`,
+              backgroundSize: '140px',
+              backgroundRepeat: 'repeat',
+              transform: 'rotate(-25deg)',
+              filter: 'brightness(0) invert(1)',
+              pointerEvents: 'none'
+            }}
+          ></div>
         </div>
 
         <div className="relative z-10 flex flex-col items-center text-center px-6 max-w-4xl animate-in fade-in zoom-in duration-700">
