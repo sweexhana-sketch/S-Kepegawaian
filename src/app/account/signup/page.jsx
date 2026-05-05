@@ -146,10 +146,10 @@ export default function SignUpPage() {
           
           {/* Tiled PUPR Logo Pattern - 70% transparency (30% opacity) */}
           <div 
-            className="absolute inset-0 opacity-[0.3]"
+            className="absolute inset-0 opacity-[0.2]"
             style={{
-              backgroundImage: `url('https://upload.wikimedia.org/wikipedia/commons/b/bc/Logo_PUPR.png')`,
-              backgroundSize: '200px',
+              backgroundImage: `url('https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Logo_PUPR.png/512px-Logo_PUPR.png')`,
+              backgroundSize: '240px',
               backgroundRepeat: 'repeat',
               filter: 'brightness(0) invert(1)',
               pointerEvents: 'none'
@@ -269,10 +269,10 @@ export default function SignUpPage() {
         
         {/* Tiled PUPR Logo Pattern - 70% transparency (30% opacity) */}
         <div 
-          className="absolute inset-0 opacity-[0.3]"
+          className="absolute inset-0 opacity-[0.2]"
           style={{
-            backgroundImage: `url('https://upload.wikimedia.org/wikipedia/commons/b/bc/Logo_PUPR.png')`,
-            backgroundSize: '200px',
+            backgroundImage: `url('https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Logo_PUPR.png/512px-Logo_PUPR.png')`,
+            backgroundSize: '240px',
             backgroundRepeat: 'repeat',
             filter: 'brightness(0) invert(1)',
             pointerEvents: 'none'
