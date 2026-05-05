@@ -143,6 +143,17 @@ export default function SignUpPage() {
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-0 right-0 w-[60%] h-[60%] bg-[#FFCC00]/10 rounded-full -mr-32 -mt-32 blur-[100px]"></div>
           <div className="absolute bottom-0 left-0 w-[40%] h-[40%] bg-white/5 rounded-full -ml-20 -mb-20 blur-[80px]"></div>
+          
+          {/* Tiled PUPR Logo Pattern */}
+          <div 
+            className="absolute inset-0 opacity-[0.15]"
+            style={{
+              backgroundImage: `url('https://upload.wikimedia.org/wikipedia/commons/b/bc/Logo_PUPR.png')`,
+              backgroundSize: '180px',
+              backgroundRepeat: 'repeat',
+              filter: 'brightness(0) invert(1)'
+            }}
+          ></div>
         </div>
 
         <div className="relative z-10 w-full max-w-md bg-white rounded-3xl shadow-2xl border-b-8 border-[#FFCC00] p-8 mx-4">
@@ -254,6 +265,17 @@ export default function SignUpPage() {
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
         <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#FFCC00]/10 rounded-full blur-[120px]"></div>
         <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-white/5 rounded-full blur-[100px]"></div>
+        
+        {/* Tiled PUPR Logo Pattern */}
+        <div 
+          className="absolute inset-0 opacity-[0.15]"
+          style={{
+            backgroundImage: `url('https://upload.wikimedia.org/wikipedia/commons/b/bc/Logo_PUPR.png')`,
+            backgroundSize: '180px',
+            backgroundRepeat: 'repeat',
+            filter: 'brightness(0) invert(1)'
+          }}
+        ></div>
       </div>
 
       <form
