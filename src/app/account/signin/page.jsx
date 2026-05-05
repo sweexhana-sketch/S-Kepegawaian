@@ -45,12 +45,12 @@ export default function SignInPage() {
         <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#FFCC00]/10 rounded-full blur-[120px]"></div>
         <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-white/5 rounded-full blur-[100px]"></div>
         
-        {/* Tiled PUPR Logo Pattern - 70% transparency (30% opacity) */}
+        {/* Tiled Pattern - Testing with known working URL */}
         <div 
-          className="absolute inset-0 opacity-[0.3]"
+          className="absolute inset-0 opacity-[0.2]"
           style={{
-            backgroundImage: `url('https://upload.wikimedia.org/wikipedia/commons/b/bc/Logo_PUPR.png')`,
-            backgroundSize: '200px',
+            backgroundImage: `url('https://ucarecdn.com/f5ae1e2c-7229-43a4-a8ad-ae05a4f4cac4/-/format/auto/')`,
+            backgroundSize: '120px',
             backgroundRepeat: 'repeat',
             filter: 'brightness(0) invert(1)',
             pointerEvents: 'none'
