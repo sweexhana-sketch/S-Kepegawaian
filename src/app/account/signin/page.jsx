@@ -52,7 +52,7 @@ export default function SignInPage() {
             style={{
               top: '-50%', left: '-50%', width: '200%', height: '200%',
               backgroundImage: `url('/pupr.png')`,
-              backgroundSize: '240px',
+              backgroundSize: '140px',
               backgroundRepeat: 'repeat',
               transform: 'rotate(-25deg)',
               filter: 'brightness(0) invert(1)',
