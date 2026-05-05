@@ -5,8 +5,8 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export default async function handler(req, res) {
-  let output = {
+export default async function handler(req: any, res: any) {
+  let output: any = {
     results: {},
     errors: {}
   };
@@ -28,19 +28,23 @@ export default async function handler(req, res) {
           // Attempt to import the module
           await import(dep);
           output.results[dep] = 'OK';
-        } catch (err) {
+        } catch (err: any) {
           output.results[dep] = 'FAIL';
-          output.errors[dep] = err.message;
+          output.errors[dep] = err?.message;
         }
       }
     } else {
       output['pkg_error'] = 'package.json not found at ' + pkgPath;
       // also just list /var/task
-      output['/var/task'] = fs.readdirSync('/var/task');
-      output['/var/task/node_modules'] = fs.existsSync('/var/task/node_modules') ? fs.readdirSync('/var/task/node_modules') : 'MISSING';
+      try {
+        output['/var/task'] = fs.readdirSync('/var/task');
+        output['/var/task/node_modules'] = fs.existsSync('/var/task/node_modules') ? fs.readdirSync('/var/task/node_modules') : 'MISSING';
+      } catch (err) {
+        output['task_read_error'] = 'Failed to read /var/task';
+      }
     }
-  } catch (e) {
-    output['fatal_error'] = e.message;
+  } catch (e: any) {
+    output['fatal_error'] = e?.message;
   }
 
   res.status(200).json(output);

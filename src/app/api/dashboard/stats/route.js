@@ -34,8 +34,8 @@ export async function GET() {
 
     const kgbBulanIniRows = await sql`
       SELECT COUNT(*) as count FROM kgb 
-      WHERE EXTRACT(MONTH FROM tmt_kgb_baru) = ${currentMonth}
-      AND EXTRACT(YEAR FROM tmt_kgb_baru) = ${currentYear}
+      WHERE EXTRACT(MONTH FROM tanggal_kgb_berikutnya) = ${currentMonth}
+      AND EXTRACT(YEAR FROM tanggal_kgb_berikutnya) = ${currentYear}
       AND status = 'pending'
     `;
     const kgbBulanIni = parseInt(kgbBulanIniRows[0].count);
@@ -55,11 +55,31 @@ export async function GET() {
     `;
     const skpBelumSubmit = parseInt(skpBelumSubmitRows[0].count);
 
+    // Get distribution stats
+    const distRows = await sql`
+      SELECT status_pegawai, COUNT(*) as count 
+      FROM pegawai 
+      WHERE is_active = true 
+      GROUP BY status_pegawai
+    `;
+    
+    let pnsCount = 0, cpnsCount = 0, pppkCount = 0;
+    distRows.forEach(r => {
+      if (r.status_pegawai === 'PNS') pnsCount = parseInt(r.count);
+      else if (r.status_pegawai === 'CPNS') cpnsCount = parseInt(r.count);
+      else if (r.status_pegawai === 'PPPK') pppkCount = parseInt(r.count);
+    });
+
     return Response.json({
       totalPegawai,
       kgbBulanIni,
       usulanKP,
       skpBelumSubmit,
+      distribusi: {
+        pns: pnsCount,
+        cpns: cpnsCount,
+        pppk: pppkCount
+      }
     });
   } catch (err) {
     console.error("GET /api/dashboard/stats error", err);

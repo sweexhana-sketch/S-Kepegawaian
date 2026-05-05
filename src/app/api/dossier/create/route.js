@@ -10,15 +10,17 @@ export async function POST(request) {
     if (!pegawaiRows.length) return Response.json({ error: "Profil tidak ditemukan" }, { status: 404 });
     const pegawaiId = pegawaiRows[0].id;
 
-    const { kategori, jenis_dokumen, deskripsi, file_url, masa_berlaku } = await request.json();
+    // The frontend sends { kategori, jenis_dokumen, deskripsi, file_url, masa_berlaku }
+    // but the db schema is: pegawai_id, kategori_dokumen, nama_dokumen, file_url, status_verifikasi, catatan, tanggal_upload
+    const { kategori, jenis_dokumen, file_url, deskripsi } = await request.json();
 
     if (!kategori || !jenis_dokumen || !file_url) {
       return Response.json({ error: "Kategori, jenis dokumen, dan file wajib diisi" }, { status: 400 });
     }
 
     const rows = await sql`
-      INSERT INTO dossier (pegawai_id, kategori, jenis_dokumen, deskripsi, file_url, masa_berlaku, status, created_at, updated_at)
-      VALUES (${pegawaiId}, ${kategori}, ${jenis_dokumen}, ${deskripsi || null}, ${file_url}, ${masa_berlaku || null}, 'pending', NOW(), NOW())
+      INSERT INTO dossier (pegawai_id, kategori_dokumen, nama_dokumen, file_url, catatan, status_verifikasi, tanggal_upload)
+      VALUES (${pegawaiId}, ${kategori}, ${jenis_dokumen}, ${file_url}, ${deskripsi || null}, 'Menunggu', NOW())
       RETURNING *
     `;
 

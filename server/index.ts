@@ -6,14 +6,14 @@
  * 2. Menggunakan Native Node.js handler (req, res) untuk meminimalkan overhead.
  * 3. Implementasi Circuit Breaker 10 detik untuk mencegah 504 Gateway Timeout.
  */
-import { getRequestListener } from '@hono/node-server';
+import { handle } from 'hono/vercel';
 import { createRequestHandler } from 'react-router';
 import * as build from '../build/server/index.js';
 import { app as apiApp } from '../__create/app';
 
 // Inisialisasi Handler di level modul (Cold Start)
 const reactRouterHandler = createRequestHandler(build, 'production');
-const apiRequestHandler = getRequestListener(apiApp.fetch);
+const apiRequestHandler = handle(apiApp);
 
 /**
  * Helper: Konversi Node.js req ke Web Standard Request
@@ -55,10 +55,65 @@ export default async function(req: any, res: any) {
   // --- JALUR 1: API ROUTES (/api/*) ---
   if (pathname.startsWith('/api/')) {
     try {
-      return apiRequestHandler(req, res);
+      // Vercel consumes the stream into req.body.
+      // Hono's handle() assumes req is an unconsumed stream.
+      // We must construct the web request manually and pass it to Hono.
+      let bodyData = undefined;
+      if (req.method !== 'GET' && req.method !== 'HEAD') {
+        if (Buffer.isBuffer(req.body)) {
+          bodyData = req.body;
+        } else if (typeof req.body === 'object') {
+          const contentType = req.headers['content-type'] || '';
+          if (contentType.includes('application/x-www-form-urlencoded')) {
+            bodyData = new URLSearchParams(req.body).toString();
+          } else {
+            bodyData = JSON.stringify(req.body);
+            if (!req.headers['content-type']) req.headers['content-type'] = 'application/json';
+          }
+        } else if (typeof req.body === 'string') {
+          bodyData = req.body;
+        } else if (req.body) {
+          bodyData = req.body;
+        }
+      }
+
+      const webReq = new Request(url.href, {
+        method: req.method,
+        headers: req.headers as HeadersInit,
+        body: bodyData,
+        // @ts-ignore
+        duplex: 'half',
+      });
+
+      const resPromise = apiApp.fetch(webReq);
+      const webRes = await resPromise;
+
+      res.status(webRes.status);
+      webRes.headers.forEach((value, key) => {
+        res.setHeader(key, value);
+      });
+
+      if (webRes.body) {
+        const reader = webRes.body.getReader();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          res.write(value);
+        }
+        res.end();
+      } else {
+        res.end();
+      }
+      return;
     } catch (err: any) {
-      console.error('[API ERROR]', err);
-      res.status(500).json({ error: err?.message || 'Internal API Error' });
+      console.error('[CRITICAL API ENTRY ERROR]', err);
+      res.statusCode = 500;
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ 
+        error: 'Internal API Entry Error', 
+        message: err?.message || 'Unknown Error',
+        stack: process.env.NODE_ENV === 'development' ? err?.stack : undefined
+      }));
       return;
     }
   }
@@ -115,12 +170,18 @@ export default async function(req: any, res: any) {
     console.log(`[PRO-SSR] Success: ${pathname} (${Date.now() - startTime}ms)`);
 
   } catch (err: any) {
-    console.error(`[PRO-SSR ERROR] at ${pathname}:`, err);
+    console.error(`[PRO-SSR CRITICAL ERROR] at ${pathname}:`, err);
     if (!res.writableEnded) {
+      res.statusCode = 500;
       if (pathname.startsWith('/api/')) {
-        res.status(500).json({ error: err?.message || 'Internal Server Error' });
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ 
+          error: 'Critical Server Error', 
+          message: err?.message || 'Unknown Error' 
+        }));
       } else {
-        res.status(500).end(`SSR Execution Failed: ${err?.message || 'Unknown Error'}`);
+        res.setHeader('Content-Type', 'text/plain');
+        res.end(`Critical Server Error: ${err?.message || 'Unknown Error'}`);
       }
     }
   }

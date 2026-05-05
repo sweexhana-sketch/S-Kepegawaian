@@ -15,10 +15,12 @@ import NeonAdapter from './adapter';
 import { getHTMLForErrorPage } from './get-html-for-error-page';
 import { isAuthAction } from './is-auth-action';
 import { API_BASENAME, api } from './route-builder';
+import { hash, compare } from 'bcryptjs';
+import sql from '../src/app/api/utils/sql';
 
 // Neon serverless: use HTTP/fetch mode (no WebSocket needed on Vercel)
 // @neondatabase/serverless automatically uses fetch when no wsConstructor is set
-neonConfig.poolQueryViaFetch = true;
+// Removing neonConfig.poolQueryViaFetch = true; to use stable WebSockets and prevent timeout
 
 const als = new AsyncLocalStorage<{ requestId: string }>();
 
@@ -52,28 +54,32 @@ app.use('*', (c, next) => {
 app.use(contextStorage());
 
 app.onError((err, c) => {
-  console.error('[HONO ERROR]', err);
+  console.error('[CRITICAL HONO ERROR]', err);
   
-  if (c.req.path.startsWith('/api/')) {
-    return c.json(
-      {
-        error: err.message || 'An error occurred in your app',
-        details: serializeError(err),
-      },
-      500
-    );
+  const isApi = c.req.path.startsWith('/api/');
+  const responseBody = {
+    error: err.message || 'Unknown Server Error',
+    details: serializeError(err),
+    path: c.req.path
+  };
+
+  if (isApi || c.req.method !== 'GET') {
+    return c.json(responseBody, 500);
   }
 
-  if (c.req.method !== 'GET') {
-    return c.json(
-      {
-        error: 'An error occurred in your app',
-        details: serializeError(err),
-      },
-      500
-    );
-  }
   return c.html(getHTMLForErrorPage(err), 200);
+});
+
+app.get('/api/health', async (c) => {
+  try {
+    const result = await pool.query('SELECT NOW()');
+    return c.json({ status: 'OK', time: result.rows[0], env: { 
+      secret_set: !!process.env.AUTH_SECRET,
+      db_set: !!process.env.DATABASE_URL 
+    }});
+  } catch (err: any) {
+    return c.json({ status: 'ERROR', error: err.message }, 500);
+  }
 });
 
 if (process.env.CORS_ORIGINS) {
@@ -85,19 +91,9 @@ if (process.env.CORS_ORIGINS) {
   );
 }
 
-for (const method of ['post', 'put', 'patch'] as const) {
-  app[method](
-    '*',
-    bodyLimit({
-      maxSize: 4.5 * 1024 * 1024,
-      onError: (c) => {
-        return c.json({ error: 'Body size limit exceeded' }, 413);
-      },
-    })
-  );
-}
-
-console.log("AUTH_SECRET is:", process.env.AUTH_SECRET ? "defined" : "undefined");
+// bodyLimit middleware removed to prevent POST request hangs on Vercel
+console.log("AUTH_SECRET length:", process.env.AUTH_SECRET ? process.env.AUTH_SECRET.length : 0);
+console.log("DATABASE_URL defined:", process.env.DATABASE_URL ? "yes" : "no");
 if (process.env.AUTH_SECRET) {
   app.use(
     '*',
@@ -173,21 +169,24 @@ if (process.env.AUTH_SECRET) {
             password: { label: 'Password', type: 'password' },
           },
           authorize: async (credentials) => {
+            console.log('[Auth.js] authorize called with email:', credentials?.email);
             const { email, password } = credentials;
             if (!email || !password) return null;
             if (typeof email !== 'string' || typeof password !== 'string') return null;
 
-            const user = await adapter.getUserByEmail(email);
-            if (!user) return null;
+            // Use global sql utility instead of pool adapter to prevent timeout
+            const users = await sql`SELECT id, name, email FROM auth_users WHERE email = ${email}`;
+            console.log('[Auth.js] authorize users found:', users.length);
+            if (users.length === 0) return null;
+            const user = users[0];
 
-            const matchingAccount = user.accounts.find(
-              (account) => account.provider === 'credentials'
-            );
-            const accountPassword = matchingAccount?.password;
+            const accounts = await sql`SELECT password FROM auth_accounts WHERE "userId" = ${user.id} AND provider = 'credentials' LIMIT 1`;
+            if (accounts.length === 0) return null;
+
+            const accountPassword = accounts[0].password;
             if (!accountPassword) return null;
 
-            const { compare: verify } = await import('bcryptjs');
-            const isValid = await verify(password, accountPassword);
+            const isValid = await compare(password, accountPassword);
             if (!isValid) return null;
 
             return user;
@@ -216,7 +215,6 @@ if (process.env.AUTH_SECRET) {
                 name: typeof name === 'string' && name.length > 0 ? name : undefined,
                 image: typeof image === 'string' && image.length > 0 ? image : undefined,
               });
-              const { hash } = await import('bcryptjs');
               await adapter.linkAccount({
                 extraData: { password: await hash(password, 10) },
                 type: 'credentials',

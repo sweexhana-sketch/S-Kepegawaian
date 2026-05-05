@@ -16,29 +16,72 @@ export async function GET(request) {
 
     let rows;
     if (pegawai.role === "admin" || pegawai.role === "pimpinan") {
-      rows = await sql`
-        SELECT c.*, p.nama_lengkap, p.nip, p.jabatan, p.unit_kerja
-        FROM cuti_izin c JOIN pegawai p ON c.pegawai_id = p.id
-        ${status ? sql`WHERE c.status = ${status}` : sql``}
-        ORDER BY c.created_at DESC
-      `;
+      if (status) {
+        rows = await sql`
+          SELECT c.*, p.nama_lengkap, p.nip, p.jabatan, p.unit_kerja
+          FROM cuti c JOIN pegawai p ON c.pegawai_id = p.id
+          WHERE c.status = ${status}
+          ORDER BY c.created_at DESC
+        `;
+      } else {
+        rows = await sql`
+          SELECT c.*, p.nama_lengkap, p.nip, p.jabatan, p.unit_kerja
+          FROM cuti c JOIN pegawai p ON c.pegawai_id = p.id
+          ORDER BY c.created_at DESC
+        `;
+      }
     } else {
-      rows = await sql`
-        SELECT c.*, p.nama_lengkap FROM cuti_izin c
-        JOIN pegawai p ON c.pegawai_id = p.id
-        WHERE c.pegawai_id = ${pegawai.id}
-        ${status ? sql`AND c.status = ${status}` : sql``}
-        ${jenis ? sql`AND c.jenis_cuti = ${jenis}` : sql``}
-        ORDER BY c.created_at DESC
-      `;
+      if (status && jenis) {
+        rows = await sql`
+          SELECT c.*, p.nama_lengkap FROM cuti c
+          JOIN pegawai p ON c.pegawai_id = p.id
+          WHERE c.pegawai_id = ${pegawai.id} AND c.status = ${status} AND c.jenis_cuti = ${jenis}
+          ORDER BY c.created_at DESC
+        `;
+      } else if (status) {
+        rows = await sql`
+          SELECT c.*, p.nama_lengkap FROM cuti c
+          JOIN pegawai p ON c.pegawai_id = p.id
+          WHERE c.pegawai_id = ${pegawai.id} AND c.status = ${status}
+          ORDER BY c.created_at DESC
+        `;
+      } else if (jenis) {
+        rows = await sql`
+          SELECT c.*, p.nama_lengkap FROM cuti c
+          JOIN pegawai p ON c.pegawai_id = p.id
+          WHERE c.pegawai_id = ${pegawai.id} AND c.jenis_cuti = ${jenis}
+          ORDER BY c.created_at DESC
+        `;
+      } else {
+        rows = await sql`
+          SELECT c.*, p.nama_lengkap FROM cuti c
+          JOIN pegawai p ON c.pegawai_id = p.id
+          WHERE c.pegawai_id = ${pegawai.id}
+          ORDER BY c.created_at DESC
+        `;
+      }
     }
+
+    // Normalize column names for frontend (lama_hari -> jumlah_hari)
+    const normalized = rows.map(c => ({
+      ...c,
+      jumlah_hari: c.lama_hari ?? c.jumlah_hari,
+    }));
 
     // Get saldo cuti
     const saldoRows = await sql`
-      SELECT * FROM saldo_cuti WHERE pegawai_id = ${pegawai.id} LIMIT 1
+      SELECT * FROM saldo_cuti WHERE pegawai_id = ${pegawai.id} AND tahun = ${new Date().getFullYear()} LIMIT 1
     `;
 
-    return Response.json({ cuti: rows, saldo: saldoRows[0] || null, total: rows.length });
+    const saldo = saldoRows[0] ? {
+      saldo_tahunan: saldoRows[0].sisa_cuti,
+      saldo_besar: 0,
+      digunakan_tahun_ini: saldoRows[0].cuti_terpakai,
+      tahun: saldoRows[0].tahun,
+      jatah_cuti: saldoRows[0].jatah_cuti,
+    } : null;
+
+    return Response.json({ cuti: normalized, saldo, total: normalized.length });
   } catch (err) {
     console.error("GET /api/cuti/list error", err);
     return Response.json({ error: "Internal Server Error" }, { status: 500 });

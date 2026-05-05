@@ -8,84 +8,61 @@ export async function GET(request) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get pegawai profile to check role
     const pegawaiRows = await sql`
       SELECT role FROM pegawai WHERE user_id = ${session.user.id} LIMIT 1
     `;
-
     if (pegawaiRows.length === 0) {
-      return Response.json(
-        { error: "Profil pegawai belum terhubung" },
-        { status: 404 },
-      );
+      return Response.json({ error: "Profil pegawai belum terhubung" }, { status: 404 });
     }
 
     const role = pegawaiRows[0].role;
 
-    // Get URL params
+    // Jika bukan admin, hanya kembalikan datanya sendiri
+    if (role !== "admin") {
+      const rows = await sql`SELECT * FROM pegawai WHERE user_id = ${session.user.id}`;
+      return Response.json({ pegawai: rows, total: rows.length, limit: 50, offset: 0 });
+    }
+
     const url = new URL(request.url);
     const search = url.searchParams.get("search") || "";
     const status = url.searchParams.get("status") || "";
     const unitKerja = url.searchParams.get("unit_kerja") || "";
-    const limit = parseInt(url.searchParams.get("limit")) || 50;
+    const limit = Math.min(parseInt(url.searchParams.get("limit")) || 50, 100);
     const offset = parseInt(url.searchParams.get("offset")) || 0;
 
-    // Build query
-    let queryParts = ["SELECT * FROM pegawai WHERE 1=1"];
-    let countQueryParts = ["SELECT COUNT(*) as count FROM pegawai WHERE 1=1"];
-    const values = [];
-    let paramIndex = 1;
+    // Use safe tagged template literals
+    let rows;
+    let countRows;
 
-    // Search filter
-    if (search) {
-      const searchPattern = `%${search}%`;
-      queryParts.push(
-        `AND (LOWER(nama_lengkap) LIKE LOWER($${paramIndex}) OR nip LIKE $${paramIndex})`,
-      );
-      countQueryParts.push(
-        `AND (LOWER(nama_lengkap) LIKE LOWER($${paramIndex}) OR nip LIKE $${paramIndex})`,
-      );
-      values.push(searchPattern);
-      paramIndex++;
+    if (search && status && unitKerja) {
+      rows = await sql`SELECT * FROM pegawai WHERE (LOWER(nama_lengkap) LIKE LOWER(${'%' + search + '%'}) OR nip LIKE ${'%' + search + '%'}) AND status_pegawai = ${status} AND LOWER(unit_kerja) LIKE LOWER(${'%' + unitKerja + '%'}) ORDER BY nama_lengkap ASC LIMIT ${limit} OFFSET ${offset}`;
+      countRows = await sql`SELECT COUNT(*) as count FROM pegawai WHERE (LOWER(nama_lengkap) LIKE LOWER(${'%' + search + '%'}) OR nip LIKE ${'%' + search + '%'}) AND status_pegawai = ${status} AND LOWER(unit_kerja) LIKE LOWER(${'%' + unitKerja + '%'})`;
+    } else if (search && status) {
+      rows = await sql`SELECT * FROM pegawai WHERE (LOWER(nama_lengkap) LIKE LOWER(${'%' + search + '%'}) OR nip LIKE ${'%' + search + '%'}) AND status_pegawai = ${status} ORDER BY nama_lengkap ASC LIMIT ${limit} OFFSET ${offset}`;
+      countRows = await sql`SELECT COUNT(*) as count FROM pegawai WHERE (LOWER(nama_lengkap) LIKE LOWER(${'%' + search + '%'}) OR nip LIKE ${'%' + search + '%'}) AND status_pegawai = ${status}`;
+    } else if (search && unitKerja) {
+      rows = await sql`SELECT * FROM pegawai WHERE (LOWER(nama_lengkap) LIKE LOWER(${'%' + search + '%'}) OR nip LIKE ${'%' + search + '%'}) AND LOWER(unit_kerja) LIKE LOWER(${'%' + unitKerja + '%'}) ORDER BY nama_lengkap ASC LIMIT ${limit} OFFSET ${offset}`;
+      countRows = await sql`SELECT COUNT(*) as count FROM pegawai WHERE (LOWER(nama_lengkap) LIKE LOWER(${'%' + search + '%'}) OR nip LIKE ${'%' + search + '%'}) AND LOWER(unit_kerja) LIKE LOWER(${'%' + unitKerja + '%'})`;
+    } else if (status && unitKerja) {
+      rows = await sql`SELECT * FROM pegawai WHERE status_pegawai = ${status} AND LOWER(unit_kerja) LIKE LOWER(${'%' + unitKerja + '%'}) ORDER BY nama_lengkap ASC LIMIT ${limit} OFFSET ${offset}`;
+      countRows = await sql`SELECT COUNT(*) as count FROM pegawai WHERE status_pegawai = ${status} AND LOWER(unit_kerja) LIKE LOWER(${'%' + unitKerja + '%'})`;
+    } else if (search) {
+      rows = await sql`SELECT * FROM pegawai WHERE LOWER(nama_lengkap) LIKE LOWER(${'%' + search + '%'}) OR nip LIKE ${'%' + search + '%'} ORDER BY nama_lengkap ASC LIMIT ${limit} OFFSET ${offset}`;
+      countRows = await sql`SELECT COUNT(*) as count FROM pegawai WHERE LOWER(nama_lengkap) LIKE LOWER(${'%' + search + '%'}) OR nip LIKE ${'%' + search + '%'}`;
+    } else if (status) {
+      rows = await sql`SELECT * FROM pegawai WHERE status_pegawai = ${status} ORDER BY nama_lengkap ASC LIMIT ${limit} OFFSET ${offset}`;
+      countRows = await sql`SELECT COUNT(*) as count FROM pegawai WHERE status_pegawai = ${status}`;
+    } else if (unitKerja) {
+      rows = await sql`SELECT * FROM pegawai WHERE LOWER(unit_kerja) LIKE LOWER(${'%' + unitKerja + '%'}) ORDER BY nama_lengkap ASC LIMIT ${limit} OFFSET ${offset}`;
+      countRows = await sql`SELECT COUNT(*) as count FROM pegawai WHERE LOWER(unit_kerja) LIKE LOWER(${'%' + unitKerja + '%'})`;
+    } else {
+      rows = await sql`SELECT * FROM pegawai ORDER BY nama_lengkap ASC LIMIT ${limit} OFFSET ${offset}`;
+      countRows = await sql`SELECT COUNT(*) as count FROM pegawai`;
     }
 
-    // Status filter
-    if (status) {
-      queryParts.push(`AND status_pegawai = $${paramIndex}`);
-      countQueryParts.push(`AND status_pegawai = $${paramIndex}`);
-      values.push(status);
-      paramIndex++;
-    }
+    const total = parseInt(countRows[0].count);
 
-    // Unit kerja filter
-    if (unitKerja) {
-      queryParts.push(`AND LOWER(unit_kerja) LIKE LOWER($${paramIndex})`);
-      countQueryParts.push(`AND LOWER(unit_kerja) LIKE LOWER($${paramIndex})`);
-      values.push(`%${unitKerja}%`);
-      paramIndex++;
-    }
-
-    // Add ordering and pagination
-    queryParts.push(
-      `ORDER BY nama_lengkap ASC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
-    );
-    values.push(limit, offset);
-
-    // Execute queries
-    const finalQuery = queryParts.join(" ");
-    const finalCountQuery = countQueryParts.join(" ");
-
-    const pegawaiList = await sql(finalQuery, values.slice(0, -2));
-    const countResult = await sql(finalCountQuery, values.slice(0, -2));
-
-    const total = parseInt(countResult[0].count);
-
-    return Response.json({
-      pegawai: pegawaiList,
-      total,
-      limit,
-      offset,
-    });
+    return Response.json({ pegawai: rows, total, limit, offset });
   } catch (err) {
     console.error("GET /api/pegawai/list error", err);
     return Response.json({ error: "Internal Server Error" }, { status: 500 });

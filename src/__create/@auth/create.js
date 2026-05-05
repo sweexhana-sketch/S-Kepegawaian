@@ -4,10 +4,11 @@ import { getContext } from 'hono/context-storage';
 export default function CreateAuth() {
 	const auth = async () => {
 		const c = getContext();
+		const isSecure = process.env.AUTH_URL ? process.env.AUTH_URL.startsWith('https') : !!process.env.VERCEL;
 		const token = await getToken({
 			req: c.req.raw,
 			secret: process.env.AUTH_SECRET,
-			secureCookie: process.env.AUTH_URL ? process.env.AUTH_URL.startsWith('https') : false,
+			secureCookie: isSecure,
 		});
 		if (token) {
 			return {

@@ -7,11 +7,9 @@ export async function GET(request, { params }) {
     if (!session?.user?.id) return Response.json({ error: "Unauthorized" }, { status: 401 });
     const { id } = params;
     const rows = await sql`
-      SELECT c.*, p.nama_lengkap, p.nip, p.jabatan, p.unit_kerja,
-        a.nama_lengkap as atasan_nama
-      FROM cuti_izin c 
+      SELECT c.*, p.nama_lengkap, p.nip, p.jabatan, p.unit_kerja
+      FROM cuti c 
       JOIN pegawai p ON c.pegawai_id = p.id
-      LEFT JOIN pegawai a ON c.atasan_id = a.id
       WHERE c.id = ${id} LIMIT 1
     `;
     if (!rows.length) return Response.json({ error: "Data tidak ditemukan" }, { status: 404 });
@@ -26,7 +24,10 @@ export async function PATCH(request, { params }) {
     const session = await auth();
     if (!session?.user?.id) return Response.json({ error: "Unauthorized" }, { status: 401 });
     const { id } = params;
-    const { status, catatan_atasan } = await request.json();
+    
+    // We get catatan_atasan from the frontend but there is no such column in the cuti table.
+    // For now we only update the status.
+    const { status } = await request.json();
 
     // Get pegawai for role check
     const pegawaiRows = await sql`SELECT id, role FROM pegawai WHERE user_id = ${session.user.id} LIMIT 1`;
@@ -38,12 +39,8 @@ export async function PATCH(request, { params }) {
     }
 
     const rows = await sql`
-      UPDATE cuti_izin SET
-        status = ${status},
-        catatan_atasan = ${catatan_atasan || null},
-        disetujui_oleh = ${pegawai.id},
-        tanggal_disetujui = NOW(),
-        updated_at = NOW()
+      UPDATE cuti SET
+        status = ${status}
       WHERE id = ${id} RETURNING *
     `;
 
@@ -53,7 +50,8 @@ export async function PATCH(request, { params }) {
     if (status === 'disetujui' && rows[0].jenis_cuti === 'cuti_tahunan') {
       await sql`
         UPDATE saldo_cuti SET 
-          saldo_tahunan = saldo_tahunan - ${rows[0].jumlah_hari},
+          sisa_cuti = sisa_cuti - ${rows[0].lama_hari},
+          cuti_terpakai = cuti_terpakai + ${rows[0].lama_hari},
           updated_at = NOW()
         WHERE pegawai_id = ${rows[0].pegawai_id}
       `.catch(() => {});

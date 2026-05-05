@@ -15,22 +15,46 @@ export async function GET(request) {
 
     let rows;
     if (pegawai.role === "admin") {
-      rows = await sql`
-        SELECT d.*, p.nama_lengkap, p.nip FROM dossier d
-        JOIN pegawai p ON d.pegawai_id = p.id
-        ${kategori ? sql`WHERE d.kategori = ${kategori}` : sql``}
-        ORDER BY d.created_at DESC
-      `;
+      if (kategori) {
+        rows = await sql`
+          SELECT d.*, p.nama_lengkap, p.nip FROM dossier d
+          JOIN pegawai p ON d.pegawai_id = p.id
+          WHERE d.kategori_dokumen = ${kategori}
+          ORDER BY d.tanggal_upload DESC
+        `;
+      } else {
+        rows = await sql`
+          SELECT d.*, p.nama_lengkap, p.nip FROM dossier d
+          JOIN pegawai p ON d.pegawai_id = p.id
+          ORDER BY d.tanggal_upload DESC
+        `;
+      }
     } else {
-      rows = await sql`
-        SELECT * FROM dossier WHERE pegawai_id = ${pegawai.id}
-        ${kategori ? sql`AND kategori = ${kategori}` : sql``}
-        ORDER BY created_at DESC
-      `;
+      if (kategori) {
+        rows = await sql`
+          SELECT * FROM dossier WHERE pegawai_id = ${pegawai.id}
+          AND kategori_dokumen = ${kategori}
+          ORDER BY tanggal_upload DESC
+        `;
+      } else {
+        rows = await sql`
+          SELECT * FROM dossier WHERE pegawai_id = ${pegawai.id}
+          ORDER BY tanggal_upload DESC
+        `;
+      }
     }
 
-    return Response.json({ dokumen: rows, total: rows.length });
+    // Normalize property names for frontend compatibility if needed
+    const normalized = rows.map(d => ({
+      ...d,
+      kategori: d.kategori_dokumen,
+      status: d.status_verifikasi,
+      created_at: d.tanggal_upload
+    }));
+
+    return Response.json({ dokumen: normalized, total: normalized.length });
   } catch (err) {
+    console.error("GET /api/dossier/list error", err);
     return Response.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

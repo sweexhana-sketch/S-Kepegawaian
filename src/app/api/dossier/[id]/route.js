@@ -33,7 +33,7 @@ export async function PATCH(request, { params }) {
     const { id } = params;
     const { status, catatan } = await request.json();
     const rows = await sql`
-      UPDATE dossier SET status = ${status}, catatan = ${catatan || null}, updated_at = NOW()
+      UPDATE dossier SET status_verifikasi = ${status}, catatan = ${catatan || null}
       WHERE id = ${id} RETURNING *
     `;
     return Response.json({ dokumen: rows[0] });

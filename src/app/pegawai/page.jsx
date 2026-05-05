@@ -1,416 +1,203 @@
 import { useState, useEffect } from "react";
 import useUser from "@/utils/useUser";
-import {
-  Search,
-  Filter,
-  Plus,
-  Eye,
-  Edit,
-  Trash2,
-  Download,
-  Users,
+import Sidebar from "@/components/Sidebar";
+import { 
+  Search, 
+  Plus, 
+  Filter, 
+  Download, 
+  MoreHorizontal, 
+  ChevronRight,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
+  Briefcase,
+  Bell
 } from "lucide-react";
 
 export default function PegawaiPage() {
   const { data: user, loading: userLoading } = useUser();
-  const [pegawai, setPegawai] = useState(null);
   const [pegawaiList, setPegawaiList] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState("");
-  const [total, setTotal] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPegawai, setCurrentPegawai] = useState(null);
 
   useEffect(() => {
-    if (!userLoading && !user) {
-      if (typeof window !== "undefined") {
-        window.location.href = "/account/signin";
-      }
-      return;
-    }
-
     if (user) {
+      fetchPegawai();
       fetchProfile();
     }
-  }, [user, userLoading]);
-
-  useEffect(() => {
-    if (pegawai) {
-      fetchPegawaiList();
-    }
-  }, [pegawai, search, filterStatus]);
+  }, [user]);
 
   const fetchProfile = async () => {
     try {
       const res = await fetch("/api/pegawai/profile");
       if (res.status === 404) {
-        if (typeof window !== "undefined") {
-          window.location.href = "/onboarding";
-        }
+        window.location.href = "/onboarding";
         return;
       }
       if (res.ok) {
         const data = await res.json();
-        setPegawai(data.pegawai);
+        setCurrentPegawai(data.pegawai);
+      } else if (res.status === 401) {
+        window.location.href = "/account/signin";
       }
     } catch (err) {
       console.error("Error fetching profile:", err);
     }
   };
 
-  const fetchPegawaiList = async () => {
+  const fetchPegawai = async () => {
     try {
-      setLoading(true);
-      const params = new URLSearchParams();
-      if (search) params.append("search", search);
-      if (filterStatus) params.append("status", filterStatus);
-
-      const res = await fetch(`/api/pegawai/list?${params.toString()}`);
+      const res = await fetch("/api/pegawai/list");
       if (res.ok) {
         const data = await res.json();
         setPegawaiList(data.pegawai || []);
-        setTotal(data.total || 0);
       }
     } catch (err) {
-      console.error("Error fetching pegawai list:", err);
+      console.error("Error fetching pegawai:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  if (userLoading || !pegawai) {
+  const filteredPegawai = pegawaiList.filter((p) =>
+    (p.nama_lengkap?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+    (p.nip || "").includes(searchTerm)
+  );
+
+  if (userLoading || loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F9FAFB]">
-        <div className="text-sm text-[#6B7280]">Memuat...</div>
+      <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC]">
+        <div className="animate-pulse flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Memuat Data...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div
-      className="min-h-screen bg-[#F9FAFB]"
-      style={{ fontFamily: "Inter, -apple-system, sans-serif" }}
-    >
-      {/* Header */}
-      <div className="bg-white border-b border-[#E5E7EB]">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <img
-                src="https://ucarecdn.com/f5ae1e2c-7229-43a4-a8ad-ae05a4f4cac4/-/format/auto/"
-                alt="Logo"
-                className="h-12 w-12 object-contain"
-              />
-              <div>
-                <h1 className="text-lg font-semibold text-[#111827] tracking-tight">
-                  S-Kepegawaian
-                </h1>
-                <p className="text-xs text-[#6B7280]">
-                  Dinas PUPR Papua Barat Daya
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 pl-4 border-l border-[#E5E7EB]">
-              <div className="text-right">
-                <p className="text-sm font-medium text-[#111827]">
-                  {pegawai?.nama_lengkap}
-                </p>
-                <p className="text-xs text-[#6B7280]">
-                  {pegawai?.role === "admin"
-                    ? "Administrator"
-                    : pegawai?.role === "pimpinan"
-                      ? "Pimpinan"
-                      : "Pegawai"}
-                </p>
-              </div>
-              <a
-                href="/account/logout"
-                className="text-xs text-[#6B7280] hover:text-[#2563EB]"
-              >
-                Keluar
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col lg:flex-row">
+      <Sidebar activePage="pegawai" />
 
-      {/* Navigation */}
-      <div className="bg-white border-b border-[#E5E7EB]">
-        <div className="max-w-7xl mx-auto px-6">
-          <nav className="flex gap-8">
-            <a
-              href="/"
-              className="py-3 border-b-2 border-transparent text-sm text-[#6B7280] hover:text-[#111827] -mb-[1px]"
-            >
-              Dashboard
-            </a>
-            <a
-              href="/pegawai"
-              className="py-3 border-b-2 border-[#2563EB] text-sm font-medium text-[#111827] -mb-[1px]"
-            >
-              Data Pegawai
-            </a>
-            <a
-              href="/skp"
-              className="py-3 border-b-2 border-transparent text-sm text-[#6B7280] hover:text-[#111827] -mb-[1px]"
-            >
-              SKP
-            </a>
-            <a
-              href="/kgb"
-              className="py-3 border-b-2 border-transparent text-sm text-[#6B7280] hover:text-[#111827] -mb-[1px]"
-            >
-              KGB
-            </a>
-            <a
-              href="/kenaikan-pangkat"
-              className="py-3 border-b-2 border-transparent text-sm text-[#6B7280] hover:text-[#111827] -mb-[1px]"
-            >
-              Kenaikan Pangkat
-            </a>
-            <a
-              href="/cuti"
-              className="py-3 border-b-2 border-transparent text-sm text-[#6B7280] hover:text-[#111827] -mb-[1px]"
-            >
-              Cuti & Izin
-            </a>
-            <a
-              href="/dossier"
-              className="py-3 border-b-2 border-transparent text-sm text-[#6B7280] hover:text-[#111827] -mb-[1px]"
-            >
-              Digital Dossier
-            </a>
-          </nav>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Page Header */}
-        <div className="flex items-center justify-between mb-6">
+      <main className="flex-1 lg:ml-72 p-4 md:p-8 pt-24 lg:pt-8 transition-all duration-300">
+        {/* Header */}
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
           <div>
-            <h2 className="text-2xl font-semibold text-[#111827] tracking-tight mb-1">
-              Data Pegawai
-            </h2>
-            <p className="text-sm text-[#6B7280]">Kelola data kepegawaian</p>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tighter">Database Pegawai</h2>
+            <p className="text-slate-500 text-sm font-medium">Manajemen data dan profil seluruh staf Dinas PUPR.</p>
           </div>
-          {pegawai?.role === "admin" && (
-            <a
-              href="/pegawai/tambah"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[#2563EB] text-white text-sm font-medium rounded-lg hover:bg-[#1D4ED8] transition-colors"
-            >
-              <Plus size={18} />
-              Tambah Pegawai
-            </a>
-          )}
-        </div>
 
-        {/* Filters */}
-        <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="relative">
-              <Search
-                size={18}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7280]"
-              />
-              <input
-                type="text"
-                placeholder="Cari nama atau NIP..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#111827] outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]"
-              />
-            </div>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#111827] outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]"
-            >
-              <option value="">Semua Status</option>
-              <option value="PNS">PNS</option>
-              <option value="CPNS">CPNS</option>
-              <option value="PPPK">PPPK</option>
-            </select>
-            <button className="inline-flex items-center justify-center gap-2 px-4 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#111827] hover:bg-[#F9FAFB] transition-colors">
-              <Download size={18} />
-              Export Excel
+          <div className="flex items-center gap-4">
+            {currentPegawai?.role === "admin" ? (
+              <a
+                href="/pegawai/tambah"
+                className="inline-flex items-center gap-3 px-6 py-3 bg-blue-600 text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all active:scale-95"
+              >
+                <Plus size={18} />
+                Tambah Pegawai
+              </a>
+            ) : (
+              currentPegawai && (
+                <a
+                  href={`/pegawai/${currentPegawai.id}/edit`}
+                  className="inline-flex items-center gap-3 px-6 py-3 bg-blue-600 text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all active:scale-95"
+                >
+                  <Plus size={18} />
+                  Lengkapi Data Profil
+                </a>
+              )
+            )}
+            <button className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-500 hover:text-blue-600 transition-colors">
+              <Download size={20} />
             </button>
           </div>
+        </header>
+
+        {/* Filter & Search Bar */}
+        <div className="bg-white rounded-3xl border border-slate-200 p-4 mb-8 flex flex-col md:flex-row gap-4 items-center">
+          <div className="relative flex-1 w-full">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <input
+              type="text"
+              placeholder="Cari berdasarkan nama atau NIP..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-12 pr-6 py-3 bg-slate-50 border-transparent rounded-2xl text-sm focus:bg-white focus:ring-2 focus:ring-blue-500/10 transition-all outline-none"
+            />
+          </div>
+          <button className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-600 hover:border-blue-600 hover:text-blue-600 transition-all">
+            <Filter size={16} />
+            Filter
+          </button>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-[#EFF6FF] flex items-center justify-center">
-                <Users size={20} className="text-[#2563EB]" />
+        {/* Grid View */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredPegawai.map((p) => (
+            <a
+              key={p.id}
+              href={`/pegawai/${p.id}`}
+              className="group bg-white rounded-[2rem] border border-slate-200 p-8 hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col h-full"
+            >
+              <div className="flex items-start justify-between mb-6">
+                <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 font-bold text-xl group-hover:scale-110 transition-transform">
+                  {p.nama_lengkap?.charAt(0)}
+                </div>
+                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                  p.status_pegawai === 'PNS' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'
+                }`}>
+                  {p.status_pegawai}
+                </span>
               </div>
-              <div>
-                <p className="text-xs text-[#6B7280]">Total Pegawai</p>
-                <p className="text-xl font-semibold text-[#111827]">{total}</p>
+
+              <div className="flex-1">
+                <h3 className="text-lg font-black text-slate-900 tracking-tight group-hover:text-blue-600 transition-colors mb-1">
+                  {p.nama_lengkap}
+                </h3>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-4">NIP. {p.nip || "-"}</p>
+                
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
+                    <Briefcase size={14} className="text-slate-400" />
+                    <span className="truncate">{p.jabatan || "-"}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
+                    <MapPin size={14} className="text-slate-400" />
+                    <span className="truncate">{p.unit_kerja || "-"}</span>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-[#ECFDF5] flex items-center justify-center">
-                <Users size={20} className="text-[#059669]" />
+
+              <div className="mt-8 pt-6 border-t border-slate-50 flex items-center justify-between">
+                <div className="flex -space-x-2">
+                   <div className="w-8 h-8 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-400">
+                     <Mail size={12} />
+                   </div>
+                   <div className="w-8 h-8 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-400">
+                     <Phone size={12} />
+                   </div>
+                </div>
+                <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                  Detail Profil <ChevronRight size={12} />
+                </span>
               </div>
-              <div>
-                <p className="text-xs text-[#6B7280]">PNS</p>
-                <p className="text-xl font-semibold text-[#111827]">
-                  {pegawaiList.filter((p) => p.status_pegawai === "PNS").length}
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-[#FEF3C7] flex items-center justify-center">
-                <Users size={20} className="text-[#EA580C]" />
-              </div>
-              <div>
-                <p className="text-xs text-[#6B7280]">CPNS</p>
-                <p className="text-xl font-semibold text-[#111827]">
-                  {
-                    pegawaiList.filter((p) => p.status_pegawai === "CPNS")
-                      .length
-                  }
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-[#F3F4F6] flex items-center justify-center">
-                <Users size={20} className="text-[#6B7280]" />
-              </div>
-              <div>
-                <p className="text-xs text-[#6B7280]">PPPK</p>
-                <p className="text-xl font-semibold text-[#111827]">
-                  {
-                    pegawaiList.filter((p) => p.status_pegawai === "PPPK")
-                      .length
-                  }
-                </p>
-              </div>
-            </div>
-          </div>
+            </a>
+          ))}
         </div>
 
-        {/* Table */}
-        <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
-                  <th className="px-4 py-3 text-left text-xs font-medium text-[#6B7280] uppercase tracking-wider">
-                    NIP
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-[#6B7280] uppercase tracking-wider">
-                    Nama
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-[#6B7280] uppercase tracking-wider">
-                    Jabatan
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-[#6B7280] uppercase tracking-wider">
-                    Unit Kerja
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-[#6B7280] uppercase tracking-wider">
-                    Pangkat/Gol
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-[#6B7280] uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-[#6B7280] uppercase tracking-wider">
-                    Aksi
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#E5E7EB]">
-                {loading ? (
-                  <tr>
-                    <td
-                      colSpan="7"
-                      className="px-4 py-8 text-center text-sm text-[#6B7280]"
-                    >
-                      Memuat data...
-                    </td>
-                  </tr>
-                ) : pegawaiList.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan="7"
-                      className="px-4 py-8 text-center text-sm text-[#6B7280]"
-                    >
-                      Tidak ada data pegawai
-                    </td>
-                  </tr>
-                ) : (
-                  pegawaiList.map((p) => (
-                    <tr
-                      key={p.id}
-                      className="hover:bg-[#F9FAFB] transition-colors"
-                    >
-                      <td className="px-4 py-3 text-sm text-[#111827] font-mono">
-                        {p.nip}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-[#111827] font-medium">
-                        {p.nama_lengkap}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-[#6B7280]">
-                        {p.jabatan || "-"}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-[#6B7280]">
-                        {p.unit_kerja || "-"}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-[#6B7280]">
-                        {p.pangkat && p.golongan
-                          ? `${p.pangkat} (${p.golongan})`
-                          : "-"}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            p.status_pegawai === "PNS"
-                              ? "bg-[#ECFDF5] text-[#059669]"
-                              : p.status_pegawai === "CPNS"
-                                ? "bg-[#FEF3C7] text-[#EA580C]"
-                                : "bg-[#F3F4F6] text-[#6B7280]"
-                          }`}
-                        >
-                          {p.status_pegawai}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <a
-                            href={`/pegawai/${p.id}`}
-                            className="p-1.5 hover:bg-[#EFF6FF] rounded transition-colors"
-                            title="Lihat Detail"
-                          >
-                            <Eye size={16} className="text-[#6B7280]" />
-                          </a>
-                          {pegawai?.role === "admin" && (
-                            <>
-                              <a
-                                href={`/pegawai/${p.id}/edit`}
-                                className="p-1.5 hover:bg-[#EFF6FF] rounded transition-colors"
-                                title="Edit"
-                              >
-                                <Edit size={16} className="text-[#6B7280]" />
-                              </a>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+        {filteredPegawai.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-24 bg-white rounded-[2.5rem] border border-dashed border-slate-200">
+            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6 text-slate-300">
+              <User size={40} />
+            </div>
+            <p className="text-sm font-black text-slate-400 uppercase tracking-widest">Tidak ada pegawai ditemukan</p>
           </div>
-        </div>
-      </div>
+        )}
+      </main>
     </div>
   );
 }

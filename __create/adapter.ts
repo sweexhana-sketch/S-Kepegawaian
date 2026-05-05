@@ -81,17 +81,22 @@ export default function NeonAdapter(client: Pool): NeonAdapter {
       return result.rows[0];
     },
     async getUser(id: string) {
+      console.log('[NeonAdapter] getUser called for id', id);
       const sql = 'select * from auth_users where id = $1';
       try {
         const result = await client.query(sql, [id]);
+        console.log('[NeonAdapter] getUser finished', result.rowCount);
         return result.rowCount === 0 ? null : result.rows[0];
-      } catch {
+      } catch (err) {
+        console.log('[NeonAdapter] getUser error', err);
         return null;
       }
     },
     async getUserByEmail(email) {
+      console.log('[NeonAdapter] getUserByEmail called for', email);
       const sql = 'select * from auth_users where email = $1';
       const result = await client.query(sql, [email]);
+      console.log('[NeonAdapter] getUserByEmail finished', result.rowCount);
       if (result.rowCount === 0) {
         return null;
       }

@@ -1,11 +1,13 @@
 import { useState } from "react";
 import useAuth from "@/utils/useAuth";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function SignInPage() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const { signInWithCredentials } = useAuth();
 
@@ -35,13 +37,19 @@ export default function SignInPage() {
 
   return (
     <div
-      className="flex min-h-screen w-full items-center justify-center bg-[#F9FAFB]"
+      className="flex min-h-screen w-full items-center justify-center bg-[#003366] relative overflow-hidden"
       style={{ fontFamily: "Inter, -apple-system, sans-serif" }}
     >
+      {/* Background Decor */}
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+        <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#FFCC00]/10 rounded-full blur-[120px]"></div>
+        <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-white/5 rounded-full blur-[100px]"></div>
+      </div>
+
       <form
         noValidate
         onSubmit={onSubmit}
-        className="w-full max-w-md bg-white rounded-xl border border-[#E5E7EB] p-8"
+        className="relative z-10 w-full max-w-md bg-white rounded-3xl shadow-2xl border-b-8 border-[#FFCC00] p-10 mx-4"
       >
         <div className="flex items-center justify-center mb-8">
           <img
@@ -51,11 +59,11 @@ export default function SignInPage() {
           />
         </div>
 
-        <h1 className="text-2xl font-semibold text-[#111827] tracking-tight text-center mb-2">
-          S-Kepegawaian
+        <h1 className="text-3xl font-black text-[#003366] tracking-tighter text-center mb-1 uppercase italic">
+          SIMPEG<span className="text-[#FFCC00] not-italic">PUPR</span>
         </h1>
-        <p className="text-sm text-[#6B7280] text-center mb-8">
-          Dinas PUPR Provinsi Papua Barat Daya
+        <p className="text-[10px] font-black text-slate-400 text-center mb-10 uppercase tracking-[0.3em]">
+          Provinsi Papua Barat Daya
         </p>
 
         <div className="space-y-5">
@@ -70,7 +78,7 @@ export default function SignInPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Masukkan email Anda"
-              className="w-full bg-white border border-[#E5E7EB] rounded-lg px-3 py-2.5 text-sm text-[#111827] outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-2"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-[#003366] outline-none focus-visible:ring-2 focus-visible:ring-[#FFCC00] transition-all"
             />
           </div>
 
@@ -78,15 +86,28 @@ export default function SignInPage() {
             <label className="block text-sm font-medium text-[#111827]">
               Password
             </label>
-            <input
-              required
-              name="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-white border border-[#E5E7EB] rounded-lg px-3 py-2.5 text-sm text-[#111827] outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-2"
-              placeholder="Masukkan password Anda"
-            />
+            <div className="relative">
+              <input
+                required
+                name="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-[#003366] outline-none focus-visible:ring-2 focus-visible:ring-[#FFCC00] transition-all pr-12"
+                placeholder="Masukkan password Anda"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
+              </button>
+            </div>
           </div>
 
           {error && (
@@ -98,16 +119,16 @@ export default function SignInPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-[#2563EB] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#1D4ED8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-2 disabled:opacity-50"
+            className="w-full rounded-xl bg-[#003366] px-6 py-4 text-sm font-black text-[#FFCC00] transition-all hover:bg-[#002244] hover:shadow-lg active:scale-[0.98] disabled:opacity-50 uppercase tracking-widest"
           >
-            {loading ? "Memuat..." : "Masuk"}
+            {loading ? "Memverifikasi..." : "Masuk ke Sistem"}
           </button>
 
           <p className="text-center text-xs text-[#6B7280]">
             Belum punya akun?{" "}
             <a
               href="/account/signup"
-              className="text-[#2563EB] hover:text-[#1D4ED8] font-medium"
+              className="text-[#003366] hover:text-[#FFCC00] font-black uppercase tracking-tighter border-b-2 border-transparent hover:border-[#FFCC00] transition-all"
             >
               Daftar di sini
             </a>

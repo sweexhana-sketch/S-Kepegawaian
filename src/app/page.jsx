@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import useUser from "@/utils/useUser";
+import Sidebar from "@/components/Sidebar";
 import {
   Bell,
   Users,
@@ -10,7 +11,11 @@ import {
   AlertCircle,
   ArrowRight,
   LogOut,
-  LayoutDashboard
+  LayoutDashboard,
+  Search,
+  ChevronRight,
+  Clock,
+  Briefcase
 } from "lucide-react";
 
 export default function HomePage() {
@@ -63,7 +68,7 @@ export default function HomePage() {
       <div className="flex min-h-screen items-center justify-center bg-[#0F172A]">
         <div className="animate-pulse flex flex-col items-center gap-4">
           <div className="w-16 h-16 bg-blue-500/20 rounded-full border-2 border-blue-500/50 border-t-blue-500 animate-spin"></div>
-          <div className="text-sm text-blue-400 font-medium tracking-widest uppercase">Memuat...</div>
+          <div className="text-sm text-blue-400 font-medium tracking-widest uppercase">Sinkronisasi Data...</div>
         </div>
       </div>
     );
@@ -72,27 +77,19 @@ export default function HomePage() {
   // PORTAL VIEW
   if (!showDashboard) {
     return (
-      <div className="relative min-h-screen w-full overflow-hidden flex flex-col items-center justify-center bg-gradient-to-br from-[#1E40AF] via-[#3B82F6] to-[#60A5FA]">
+      <div className="relative min-h-screen w-full overflow-hidden flex flex-col items-center justify-center bg-[#003366]">
         {/* Abstract Background Elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
-          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-white rounded-full blur-[120px]"></div>
-          <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-300 rounded-full blur-[150px]"></div>
-          <div className="absolute inset-0 bg-[radial-gradient(#ffffff22_1px,transparent_1px)] [background-size:32px_32px]"></div>
-          {/* Subtle World Map Outline (SVG) */}
-          <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid slice">
-            <path d="M150,200 Q200,150 250,200 T350,200 T450,250 T550,200 T650,250 T750,200 T850,250" fill="none" stroke="white" strokeWidth="2" strokeDasharray="5,5" />
-            <circle cx="200" cy="200" r="2" fill="white" />
-            <circle cx="400" cy="250" r="2" fill="white" />
-            <circle cx="600" cy="220" r="2" fill="white" />
-            <circle cx="800" cy="270" r="2" fill="white" />
-          </svg>
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#FFCC00]/10 rounded-full blur-[120px]"></div>
+          <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#FFCC00]/5 rounded-full blur-[150px]"></div>
+          <div className="absolute inset-0 bg-[radial-gradient(#ffffff05_1px,transparent_1px)] [background-size:32px_32px]"></div>
         </div>
 
         <div className="relative z-10 flex flex-col items-center text-center px-6 max-w-4xl animate-in fade-in zoom-in duration-700">
           {/* Main Logo Container */}
           <div className="mb-12 relative">
-            <div className="absolute -inset-4 bg-white/20 blur-xl rounded-full animate-pulse"></div>
-            <div className="relative w-40 h-40 md:w-48 md:h-48 bg-white rounded-full p-6 shadow-2xl flex items-center justify-center border-4 border-white/30 backdrop-blur-sm">
+            <div className="absolute -inset-8 bg-[#FFCC00]/20 blur-3xl rounded-full animate-pulse"></div>
+            <div className="relative w-40 h-40 md:w-48 md:h-48 bg-white rounded-[2.5rem] p-8 shadow-2xl flex items-center justify-center border-4 border-[#FFCC00]">
               <img
                 src="https://ucarecdn.com/f5ae1e2c-7229-43a4-a8ad-ae05a4f4cac4/-/format/auto/"
                 alt="Logo"
@@ -102,21 +99,17 @@ export default function HomePage() {
           </div>
 
           <div className="space-y-6">
-            <h2 className="text-white text-xl md:text-2xl font-light tracking-[0.2em] uppercase">
-              Selamat Datang di
+            <h2 className="text-[#FFCC00] text-lg md:text-xl font-black tracking-[0.3em] uppercase">
+              S-Kepegawaian PUPR
             </h2>
             
             <div className="flex flex-col items-center gap-4">
-              <div className="bg-white px-8 py-3 rounded-xl shadow-xl">
-                <h1 className="text-4xl md:text-6xl font-black tracking-tighter">
-                  <span className="text-[#1E40AF]">SIM</span>
-                  <span className="text-[#3B82F6]">PEG</span>
-                  <span className="ml-2 text-gray-300 font-light">DIGITAL</span>
-                </h1>
-              </div>
-              <p className="text-blue-50 text-lg md:text-xl font-medium tracking-wide max-w-2xl leading-relaxed">
-                Platform Digital Manajemen Kepegawaian Terpadu
-                <span className="block text-white/80 text-base font-normal mt-2">Dinas Pekerjaan Umum & Perumahan Rakyat Provinsi Papua Barat Daya</span>
+              <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-white">
+                SIMPEG<span className="text-[#FFCC00]">PUPR</span>
+              </h1>
+              <p className="text-blue-100 text-lg md:text-xl font-medium tracking-wide max-w-2xl leading-relaxed">
+                Manajemen Kepegawaian Terintegrasi & Modern
+                <span className="block text-yellow-500/80 text-base font-bold mt-2">Dinas Pekerjaan Umum & Perumahan Rakyat Provinsi Papua Barat Daya</span>
               </p>
             </div>
 
@@ -125,15 +118,15 @@ export default function HomePage() {
                 <>
                   <button
                     onClick={() => setShowDashboard(true)}
-                    className="group px-8 py-4 bg-white text-[#1E40AF] font-bold rounded-full shadow-lg hover:shadow-2xl hover:scale-105 transition-all flex items-center gap-3"
+                    className="group px-8 py-4 bg-[#FFCC00] text-[#003366] font-black rounded-2xl shadow-xl hover:scale-105 transition-all flex items-center gap-3 uppercase tracking-wider"
                   >
                     <LayoutDashboard size={20} />
-                    Masuk Ke Dashboard
+                    Masuk Dashboard
                     <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                   </button>
                   <a
                     href="/account/logout"
-                    className="px-8 py-4 bg-white/10 text-white font-medium rounded-full border border-white/30 hover:bg-white/20 transition-all backdrop-blur-md flex items-center gap-2"
+                    className="px-8 py-4 bg-white/10 text-white font-bold rounded-2xl border border-white/20 hover:bg-white/20 transition-all backdrop-blur-md flex items-center gap-2"
                   >
                     <LogOut size={18} />
                     Keluar
@@ -142,7 +135,7 @@ export default function HomePage() {
               ) : (
                 <a
                   href="/account/signin"
-                  className="group px-12 py-4 bg-white text-[#1E40AF] font-bold rounded-full shadow-lg hover:shadow-2xl hover:scale-105 transition-all flex items-center gap-3"
+                  className="group px-12 py-4 bg-[#FFCC00] text-[#003366] font-black rounded-2xl shadow-xl hover:scale-105 transition-all flex items-center gap-3 uppercase tracking-wider"
                 >
                   Masuk Ke Sistem
                   <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
@@ -153,7 +146,7 @@ export default function HomePage() {
         </div>
 
         {/* Footer */}
-        <div className="absolute bottom-8 text-white/50 text-xs tracking-widest uppercase font-medium">
+        <div className="absolute bottom-8 text-slate-600 text-[10px] tracking-[0.4em] uppercase font-bold">
           &copy; 2026 SIMPEG DIGITAL · PAPUA BARAT DAYA
         </div>
       </div>
@@ -162,222 +155,156 @@ export default function HomePage() {
 
   // DASHBOARD VIEW
   return (
-    <div
-      className="min-h-screen bg-[#F8FAFC]"
-      style={{ fontFamily: "Inter, -apple-system, sans-serif" }}
-    >
-      {/* Header */}
-      <div className="bg-white border-b border-[#E2E8F0] sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div 
-                className="cursor-pointer hover:opacity-80 transition-opacity"
-                onClick={() => setShowDashboard(false)}
-              >
-                <img
-                  src="https://ucarecdn.com/f5ae1e2c-7229-43a4-a8ad-ae05a4f4cac4/-/format/auto/"
-                  alt="Logo"
-                  className="h-10 w-10 object-contain"
-                />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-[#0F172A] tracking-tight">
-                  SIMPEG DIGITAL
-                </h1>
-                <p className="text-[10px] text-[#64748B] font-bold uppercase tracking-wider">
-                  Provinsi Papua Barat Daya
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <button className="relative p-2 hover:bg-[#F1F5F9] rounded-xl transition-colors">
-                <Bell size={20} className="text-[#64748B]" />
-                {notifikasi.filter((n) => !n.is_read).length > 0 && (
-                  <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-                )}
-              </button>
-              <div className="flex items-center gap-3 pl-4 border-l border-[#E2E8F0]">
-                <div className="text-right hidden sm:block">
-                  <p className="text-sm font-semibold text-[#0F172A]">
-                    {pegawai?.nama_lengkap || user?.name}
-                  </p>
-                  <p className="text-[10px] font-bold text-blue-600 uppercase tracking-tighter">
-                    {pegawai?.role || "USER"}
-                  </p>
-                </div>
-                <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 font-bold">
-                  {(pegawai?.nama_lengkap || user?.name || "U").charAt(0)}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-[#F8FAFC] flex" style={{ fontFamily: "Inter, -apple-system, sans-serif" }}>
+      <Sidebar activePage="dashboard" />
 
-      {/* Navigation Tabs */}
-      <div className="bg-white border-b border-[#E2E8F0]">
-        <div className="max-w-7xl mx-auto px-6">
-          <nav className="flex gap-8 overflow-x-auto no-scrollbar">
-            {[
-              { label: "Dashboard", href: "/", active: true },
-              { label: "Data Pegawai", href: "/pegawai" },
-              { label: "SKP", href: "/skp" },
-              { label: "KGB", href: "/kgb" },
-              { label: "Kenaikan Pangkat", href: "/kenaikan-pangkat" },
-              { label: "Cuti & Izin", href: "/cuti" },
-              { label: "Digital Dossier", href: "/dossier" },
-            ].map((item) => (
-              <a
-                key={item.label}
-                href={item.href}
-                className={`py-4 text-xs font-bold uppercase tracking-widest transition-all border-b-2 whitespace-nowrap ${
-                  item.active
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-[#64748B] hover:text-[#0F172A]"
-                }`}
-              >
-                {item.label}
-              </a>
-            ))}
-          </nav>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        {/* Welcome Section */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
-          <div>
-            <h2 className="text-3xl font-black text-[#0F172A] tracking-tight mb-2">
-              Halo, {pegawai?.nama_lengkap?.split(" ")[0] || user?.name}!
-            </h2>
-            <div className="flex items-center gap-3">
-              <span className="px-3 py-1 bg-blue-100 text-blue-700 text-[10px] font-bold rounded-full uppercase tracking-wider">
-                {pegawai?.jabatan || "Pegawai"}
-              </span>
-              <span className="text-xs text-[#64748B] font-medium">
-                {pegawai?.unit_kerja || "Dinas PUPR"}
-              </span>
+      {/* Main Content Area */}
+      <main className="flex-1 lg:ml-72 p-4 md:p-8 pt-24 lg:pt-8 transition-all duration-300">
+        {/* Top bar for mobile/desktop */}
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+          <div className="animate-in slide-in-from-left duration-700">
+            <h2 className="text-3xl font-black text-slate-900 tracking-tighter">Dashboard Utama</h2>
+            <p className="text-slate-500 text-sm font-medium">Selamat datang kembali, Sistem Kepegawaian Digital.</p>
+          </div>
+          
+          <div className="flex items-center gap-4 animate-in slide-in-from-right duration-700">
+            <div className="relative hidden md:block">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input 
+                type="text" 
+                placeholder="Cari data..." 
+                className="pl-12 pr-6 py-3 bg-white border border-slate-200 rounded-2xl text-sm focus:ring-4 focus:ring-yellow-500/10 transition-all outline-none w-64 shadow-sm"
+              />
             </div>
+            <button className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-500 hover:text-[#003366] transition-colors shadow-sm relative">
+              <Bell size={20} />
+              <span className="absolute top-3 right-3 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
+            </button>
           </div>
-          <div className="text-right">
-            <p className="text-xs text-[#64748B] font-bold uppercase tracking-widest">
-              {new Date().toLocaleDateString("id-ID", { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-            </p>
-          </div>
-        </div>
+        </header>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        {/* Hero Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           {[
-            { label: "Total Pegawai", value: stats?.totalPegawai || 0, icon: Users, color: "blue" },
-            { label: "KGB Bulan Ini", value: stats?.kgbBulanIni || 0, icon: Calendar, color: "orange" },
-            { label: "Usulan Kenaikan Pangkat", value: stats?.usulanKP || 0, icon: Award, color: "emerald" },
-            { label: "SKP Belum Submits", value: stats?.skpBelumSubmit || 0, icon: FileText, color: "rose" },
-          ].map((stat) => (
-            <div key={stat.label} className="bg-white rounded-2xl border border-[#E2E8F0] p-6 hover:shadow-xl hover:-translate-y-1 transition-all group">
-              <div className={`w-12 h-12 rounded-xl bg-${stat.color}-50 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                <stat.icon size={24} className={`text-${stat.color}-600`} />
+            { label: 'Total Pegawai', value: stats?.totalPegawai || 0, icon: Users, color: 'blue', trend: '+12% bln ini' },
+            { label: 'Layanan KGB', value: stats?.totalKgb || 0, icon: TrendingUp, color: 'emerald', trend: '4 Menunggu' },
+            { label: 'SKP Selesai', value: '85%', icon: FileText, color: 'indigo', trend: 'Target: 100%' },
+            { label: 'Absensi Hari Ini', value: '92%', icon: Clock, color: 'orange', trend: 'WIT Time' }
+          ].map((stat, i) => (
+            <div 
+              key={stat.label}
+              className="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group relative overflow-hidden"
+              style={{ animationDelay: `${i * 100}ms` }}
+            >
+              <div className={`absolute top-0 right-0 w-24 h-24 bg-[#FFCC00]/10 rounded-full -mr-12 -mt-12 opacity-50 group-hover:scale-150 transition-transform duration-700`}></div>
+              <div className="relative z-10">
+                <div className={`w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center mb-6 text-[#003366] group-hover:bg-[#003366] group-hover:text-[#FFCC00] transition-colors duration-300`}>
+                  <stat.icon size={24} />
+                </div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">{stat.label}</p>
+                <h3 className="text-3xl font-black text-slate-900 mb-2">{stat.value}</h3>
+                <p className={`text-[10px] font-bold text-[#003366] bg-[#FFCC00] px-2 py-1 rounded-lg inline-block`}>{stat.trend}</p>
               </div>
-              <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest mb-1">{stat.label}</p>
-              <p className="text-3xl font-black text-[#0F172A]">{stat.value}</p>
             </div>
           ))}
         </div>
 
-        {/* Two Column Layout */}
+        {/* Dynamic Bento Sections */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Notifikasi */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl border border-[#E2E8F0] p-8 shadow-sm">
-              <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-6 bg-blue-600 rounded-full"></div>
-                  <h3 className="text-xl font-bold text-[#0F172A]">
-                    Notifikasi & Pengingat
-                  </h3>
-                </div>
-                <a
-                  href="/notifikasi"
-                  className="text-xs font-bold text-blue-600 hover:text-blue-800 uppercase tracking-widest"
-                >
-                  Lihat Semua
-                </a>
-              </div>
-              <div className="space-y-4">
+          
+          {/* Main Work Card */}
+          <div className="lg:col-span-2 space-y-8">
+            <div className="bg-white rounded-[2.5rem] border border-slate-200 p-10 shadow-sm">
+               <div className="flex items-center justify-between mb-10">
+                  <div className="flex items-center gap-4">
+                     <div className="w-3 h-8 bg-[#FFCC00] rounded-full"></div>
+                     <h3 className="text-2xl font-black text-[#003366] tracking-tight">Notifikasi & Agenda</h3>
+                  </div>
+                  <button className="text-xs font-black text-[#003366] uppercase tracking-widest hover:underline">Lihat Kalender</button>
+               </div>
+
+               <div className="space-y-6">
                 {notifikasi.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 opacity-40">
-                    <AlertCircle size={48} className="mb-4" />
-                    <p className="text-sm font-bold uppercase tracking-widest">
-                      Tidak ada notifikasi
-                    </p>
+                  <div className="flex flex-col items-center justify-center py-20 opacity-30">
+                    <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-6">
+                      <AlertCircle size={40} />
+                    </div>
+                    <p className="text-sm font-black uppercase tracking-[0.2em]">Belum ada aktivitas</p>
                   </div>
                 ) : (
-                  notifikasi.slice(0, 5).map((notif) => (
-                    <div
-                      key={notif.id}
-                      className="group flex items-start gap-4 p-4 rounded-xl border border-transparent hover:border-blue-100 hover:bg-blue-50/50 transition-all"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform">
-                        <AlertCircle size={18} className="text-blue-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-[#0F172A] mb-1">
-                          {notif.judul}
-                        </p>
-                        <p className="text-xs text-[#64748B] leading-relaxed line-clamp-2">
-                          {notif.pesan}
-                        </p>
-                        <p className="text-[10px] font-bold text-[#94A3B8] mt-2 uppercase tracking-tighter">
-                          {new Date(notif.created_at).toLocaleDateString(
-                            "id-ID",
-                            { day: "numeric", month: "short", year: "numeric" },
-                          )}
-                        </p>
-                      </div>
-                      {!notif.is_read && (
-                        <div className="w-2 h-2 rounded-full bg-blue-600 flex-shrink-0 mt-2"></div>
-                      )}
+                  notifikasi.slice(0, 4).map((notif) => (
+                    <div key={notif.id} className="group flex items-start gap-6 p-6 rounded-3xl hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100">
+                       <div className="w-12 h-12 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                          <Clock size={20} className="text-blue-600" />
+                       </div>
+                       <div className="flex-1">
+                           <div className="flex items-center justify-between mb-1">
+                             <h4 className="font-bold text-[#003366]">{notif.judul}</h4>
+                             <span className="text-[10px] font-bold text-slate-400">{new Date(notif.created_at).toLocaleDateString('id-ID')}</span>
+                          </div>
+                          <p className="text-xs text-slate-500 leading-relaxed line-clamp-1">{notif.pesan}</p>
+                       </div>
                     </div>
                   ))
                 )}
-              </div>
+               </div>
+            </div>
+
+            {/* Quick Access Grid */}
+            <div className="grid grid-cols-2 gap-6">
+               <a href="/pegawai/tambah" className="bg-[#003366] rounded-[2rem] p-8 text-white group hover:bg-[#FFCC00] hover:text-[#003366] transition-all duration-500 overflow-hidden relative shadow-lg">
+                  <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-white/5 rounded-full group-hover:scale-150 transition-transform"></div>
+                  <Users className="mb-4 text-[#FFCC00] group-hover:text-[#003366]" size={32} />
+                  <h4 className="font-bold text-lg mb-1 uppercase tracking-tight">Daftarkan Pegawai</h4>
+                  <p className="text-xs text-blue-100 group-hover:text-[#003366]/70">Registrasi anggota baru ke sistem</p>
+               </a>
+               <a href="/absensi" className="bg-white rounded-[2rem] border-2 border-[#003366]/10 p-8 group hover:border-[#FFCC00] transition-all duration-500 shadow-sm">
+                  <Clock className="mb-4 text-[#003366]" size={32} />
+                  <h4 className="font-bold text-lg text-[#003366] mb-1 uppercase tracking-tight">Monitor Absensi</h4>
+                  <p className="text-xs text-slate-500">Cek status kehadiran real-time</p>
+               </a>
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl border border-[#E2E8F0] p-8 shadow-sm">
-              <div className="flex items-center gap-3 mb-8">
-                <div className="w-2 h-6 bg-orange-500 rounded-full"></div>
-                <h3 className="text-xl font-bold text-[#0F172A]">
-                  Menu Cepat
-                </h3>
-              </div>
-              <div className="grid grid-cols-1 gap-3">
-                {[
-                  { label: "Tambah Pegawai", icon: Users, href: "/pegawai/tambah" },
-                  { label: "Upload SKP", icon: FileText, href: "/skp/upload" },
-                  { label: "Ajukan Cuti", icon: Calendar, href: "/cuti/ajukan" },
-                  { label: "Upload Dokumen", icon: TrendingUp, href: "/dossier/upload" },
-                ].map((action) => (
-                  <a
-                    key={action.label}
-                    href={action.href}
-                    className="flex items-center gap-4 p-4 rounded-xl border border-[#E2E8F0] hover:border-blue-600 hover:bg-blue-50 hover:shadow-md transition-all group"
-                  >
-                    <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center text-[#64748B] group-hover:bg-white group-hover:text-blue-600 transition-colors">
-                      <action.icon size={20} />
-                    </div>
-                    <span className="text-sm font-bold text-[#334155] group-hover:text-blue-700">{action.label}</span>
-                  </a>
-                ))}
-              </div>
+          {/* Right Column / Quick Widgets */}
+          <div className="space-y-8">
+            <div className="bg-gradient-to-br from-[#003366] to-[#004080] rounded-[2.5rem] p-10 text-white shadow-2xl shadow-blue-900/20 relative overflow-hidden border-b-4 border-[#FFCC00]">
+               <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20"></div>
+               <Briefcase className="mb-8 text-[#FFCC00]" size={48} />
+               <h3 className="text-2xl font-black tracking-tight mb-2 uppercase">Profil Kepegawaian</h3>
+               <p className="text-blue-100 text-sm leading-relaxed mb-8 font-medium">Lengkapi data mandiri Anda untuk mempermudah proses administrasi.</p>
+               <a href="/pegawai" className="inline-flex items-center gap-3 px-6 py-3 bg-[#FFCC00] text-[#003366] rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 transition-transform shadow-lg">
+                  Update Profil <ChevronRight size={16} />
+               </a>
+            </div>
+
+            <div className="bg-white rounded-[2.5rem] border border-slate-200 p-10 shadow-sm">
+               <h3 className="text-lg font-black text-[#003366] tracking-tight mb-8 uppercase">Statistik Cepat</h3>
+               <div className="space-y-6">
+                  {[
+                    { label: "PNS", value: stats?.distribusi?.pns || 0, total: stats?.totalPegawai || 1, color: "#003366" },
+                    { label: "CPNS", value: stats?.distribusi?.cpns || 0, total: stats?.totalPegawai || 1, color: "#FFCC00" },
+                    { label: "PPPK", value: stats?.distribusi?.pppk || 0, total: stats?.totalPegawai || 1, color: "#94a3b8" },
+                  ].map((item) => {
+                    const percentage = Math.round((item.value / item.total) * 100);
+                    return (
+                      <div key={item.label} className="space-y-2">
+                        <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
+                            <span className="text-slate-500">{item.label} ({item.value})</span>
+                            <span className="text-slate-900 font-black">{percentage}%</span>
+                        </div>
+                        <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                            <div className={`h-full rounded-full transition-all duration-1000`} style={{ width: `${percentage}%`, backgroundColor: item.color }}></div>
+                        </div>
+                      </div>
+                    );
+                  })}
+               </div>
             </div>
           </div>
+
         </div>
-      </div>
+      </main>
     </div>
   );
 }

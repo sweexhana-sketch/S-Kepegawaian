@@ -10,6 +10,22 @@ export async function GET(request, { params }) {
 
     const { id } = params;
 
+    // Ambil profile user yang sedang login
+    const userPegawaiRows = await sql`
+      SELECT id, role FROM pegawai WHERE user_id = ${session.user.id} LIMIT 1
+    `;
+    
+    if (userPegawaiRows.length === 0) {
+      return Response.json({ error: "Profil pegawai belum terhubung" }, { status: 404 });
+    }
+
+    const { id: currentPegawaiId, role } = userPegawaiRows[0];
+
+    // Jika bukan admin dan mencoba mengakses ID orang lain
+    if (role !== "admin" && currentPegawaiId !== id) {
+      return Response.json({ error: "Forbidden: Hanya dapat melihat data sendiri" }, { status: 403 });
+    }
+
     const pegawaiRows = await sql`
       SELECT * FROM pegawai WHERE id = ${id} LIMIT 1
     `;
@@ -37,6 +53,22 @@ export async function PUT(request, { params }) {
 
     const { id } = params;
     const body = await request.json();
+
+    // Ambil profile user yang sedang login
+    const userPegawaiRows = await sql`
+      SELECT id, role FROM pegawai WHERE user_id = ${session.user.id} LIMIT 1
+    `;
+    
+    if (userPegawaiRows.length === 0) {
+      return Response.json({ error: "Profil pegawai belum terhubung" }, { status: 404 });
+    }
+
+    const { id: currentPegawaiId, role } = userPegawaiRows[0];
+
+    // Jika bukan admin dan mencoba mengupdate ID orang lain
+    if (role !== "admin" && currentPegawaiId !== id) {
+      return Response.json({ error: "Forbidden: Hanya dapat mengubah data sendiri" }, { status: 403 });
+    }
 
     // Check if pegawai exists
     const existingRows = await sql`
@@ -81,6 +113,8 @@ export async function PUT(request, { params }) {
       "tmt_jabatan",
       "role",
       "is_active",
+      "home_latitude",
+      "home_longitude",
     ];
 
     for (const field of updatableFields) {

@@ -110,13 +110,13 @@ async function bundleServer() {
     banner: {
       js: `import { createRequire } from 'module'; const require = createRequire(import.meta.url);`,
     },
-    outfile: resolve(__dirname, '../api/index.js'),
+    outfile: resolve(__dirname, '../build/server-bundle/index.js'),
     external: [
       'node:*',
     ],
   });
   
-  console.log('Server bundled successfully to api/index.js');
+  console.log('Server bundled successfully to build/server-bundle/index.js');
 }
 
 bundleServer().catch(err => {

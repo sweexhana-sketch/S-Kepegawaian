@@ -2,6 +2,58 @@ import { useState, useEffect } from "react";
 import useUser from "@/utils/useUser";
 import { ArrowLeft } from "lucide-react";
 
+const GOLONGAN_LIST = [
+  { value: "I/a", label: "I/a - Juru Muda", pangkat: "Juru Muda" },
+  { value: "I/b", label: "I/b - Juru Muda Tingkat I", pangkat: "Juru Muda Tingkat I" },
+  { value: "I/c", label: "I/c - Juru", pangkat: "Juru" },
+  { value: "I/d", label: "I/d - Juru Tingkat I", pangkat: "Juru Tingkat I" },
+  { value: "II/a", label: "II/a - Pengatur Muda", pangkat: "Pengatur Muda" },
+  { value: "II/b", label: "II/b - Pengatur Muda Tingkat I", pangkat: "Pengatur Muda Tingkat I" },
+  { value: "II/c", label: "II/c - Pengatur", pangkat: "Pengatur" },
+  { value: "II/d", label: "II/d - Pengatur Tingkat I", pangkat: "Pengatur Tingkat I" },
+  { value: "III/a", label: "III/a - Penata Muda", pangkat: "Penata Muda" },
+  { value: "III/b", label: "III/b - Penata Muda Tingkat I", pangkat: "Penata Muda Tingkat I" },
+  { value: "III/c", label: "III/c - Penata", pangkat: "Penata" },
+  { value: "III/d", label: "III/d - Penata Tingkat I", pangkat: "Penata Tingkat I" },
+  { value: "IV/a", label: "IV/a - Pembina", pangkat: "Pembina" },
+  { value: "IV/b", label: "IV/b - Pembina Tingkat I", pangkat: "Pembina Tingkat I" },
+  { value: "IV/c", label: "IV/c - Pembina Utama Muda", pangkat: "Pembina Utama Muda" },
+  { value: "IV/d", label: "IV/d - Pembina Utama Madya", pangkat: "Pembina Utama Madya" },
+  { value: "IV/e", label: "IV/e - Pembina Utama", pangkat: "Pembina Utama" },
+];
+
+const BIDANG_MAP = {
+  "Sekretariat": [
+    "Sub Bagian Perencanaan",
+    "Sub Bagian Umum dan Kepegawaian",
+    "Sub Bagian Data dan Informasi Publik"
+  ],
+  "Bidang Sumber Daya Air": [
+    "Seksi Perencanaan",
+    "Seksi Pelaksanaan Sumber Daya Air",
+    "Seksi Operasi dan Pemeliharaan"
+  ],
+  "Bidang Bina Marga": [
+    "Seksi Perencanaan Teknik dan Evaluasi",
+    "Seksi Pembangunan Jalan dan Jembatan",
+    "Seksi Reservasi Jalan dan Jembatan"
+  ],
+  "Bidang Cipta Karya dan Tata Ruang": [
+    "Seksi Penyehatan Lingkungan Permukiman dan Air Minum",
+    "Seksi Penataan Bangunan dan Pengembangan Permukiman",
+    "Seksi Tata Ruang"
+  ],
+  "Bidang Perumahan dan Bina Konstruksi": [
+    "Seksi Perumahan dan Kawasan Permukiman",
+    "Seksi Prasarana, Sarana dan Utilitas",
+    "Seksi Bina Konstruksi"
+  ],
+  "UPTD": [],
+  "Fungsional": []
+};
+
+const BIDANG_LIST = Object.keys(BIDANG_MAP);
+
 export default function EditPegawaiPage({ params }) {
   const { data: user, loading: userLoading } = useUser();
   const [currentPegawai, setCurrentPegawai] = useState(null);
@@ -66,13 +118,6 @@ export default function EditPegawaiPage({ params }) {
       if (profileRes.ok) {
         const profileData = await profileRes.json();
         setCurrentPegawai(profileData.pegawai);
-
-        if (profileData.pegawai.role !== "admin") {
-          if (typeof window !== "undefined") {
-            window.location.href = "/pegawai";
-          }
-          return;
-        }
       }
 
       if (detailRes.ok) {
@@ -94,6 +139,7 @@ export default function EditPegawaiPage({ params }) {
           pangkat: p.pangkat || "",
           jabatan: p.jabatan || "",
           unit_kerja: p.unit_kerja || "",
+          sub_unit: p.sub_unit || "",
           pendidikan_terakhir: p.pendidikan_terakhir || "",
           jurusan: p.jurusan || "",
           nama_institusi: p.nama_institusi || "",
@@ -103,6 +149,8 @@ export default function EditPegawaiPage({ params }) {
           tmt_pangkat_terakhir: p.tmt_pangkat_terakhir || "",
           tmt_jabatan: p.tmt_jabatan || "",
           role: p.role || "pegawai",
+          home_latitude: p.home_latitude || "",
+          home_longitude: p.home_longitude || "",
         });
       }
     } catch (err) {
@@ -115,7 +163,24 @@ export default function EditPegawaiPage({ params }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const newData = { ...prev, [name]: value };
+      
+      // Auto-update pangkat when golongan changes
+      if (name === "golongan") {
+        const found = GOLONGAN_LIST.find(g => g.value === value);
+        if (found) {
+          newData.pangkat = found.pangkat;
+        }
+      }
+
+      // Reset sub_unit when unit_kerja changes
+      if (name === "unit_kerja") {
+        newData.sub_unit = "";
+      }
+      
+      return newData;
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -183,7 +248,9 @@ export default function EditPegawaiPage({ params }) {
                 <p className="text-sm font-medium text-[#111827]">
                   {currentPegawai?.nama_lengkap}
                 </p>
-                <p className="text-xs text-[#6B7280]">Administrator</p>
+                <p className="text-xs text-[#6B7280]">
+                  {currentPegawai?.role === 'admin' ? 'Administrator' : 'Pegawai'}
+                </p>
               </div>
               <a
                 href="/account/logout"
@@ -387,14 +454,17 @@ export default function EditPegawaiPage({ params }) {
                 <label className="block text-sm font-medium text-[#111827] mb-2">
                   Golongan
                 </label>
-                <input
-                  type="text"
+                <select
                   name="golongan"
                   value={formData.golongan}
                   onChange={handleChange}
-                  placeholder="Contoh: III/d"
                   className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#111827] outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]"
-                />
+                >
+                  <option value="">Pilih Golongan</option>
+                  {GOLONGAN_LIST.map((g) => (
+                    <option key={g.value} value={g.value}>{g.label}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="md:col-span-2">
@@ -406,7 +476,9 @@ export default function EditPegawaiPage({ params }) {
                   name="pangkat"
                   value={formData.pangkat}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#111827] outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]"
+                  placeholder="Terisi otomatis berdasarkan golongan"
+                  className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#111827] outline-none bg-slate-50"
+                  readOnly
                 />
               </div>
 
@@ -423,17 +495,41 @@ export default function EditPegawaiPage({ params }) {
                 />
               </div>
 
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-[#111827] mb-2">
-                  Unit Kerja
-                </label>
-                <input
-                  type="text"
-                  name="unit_kerja"
-                  value={formData.unit_kerja}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#111827] outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]"
-                />
+              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-sm font-medium text-[#111827] mb-2">
+                    Bidang Penempatan (Unit Kerja)
+                  </label>
+                  <select
+                    name="unit_kerja"
+                    value={formData.unit_kerja}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#111827] outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]"
+                  >
+                    <option value="">Pilih Bidang Penempatan</option>
+                    {BIDANG_LIST.map((b) => (
+                      <option key={b} value={b}>{b}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#111827] mb-2">
+                    Sub Bagian / Seksi
+                  </label>
+                  <select
+                    name="sub_unit"
+                    value={formData.sub_unit}
+                    onChange={handleChange}
+                    disabled={!formData.unit_kerja || BIDANG_MAP[formData.unit_kerja]?.length === 0}
+                    className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#111827] outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] disabled:bg-slate-50 disabled:text-slate-400"
+                  >
+                    <option value="">Pilih Sub Bagian / Seksi</option>
+                    {formData.unit_kerja && BIDANG_MAP[formData.unit_kerja]?.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div>
@@ -502,6 +598,34 @@ export default function EditPegawaiPage({ params }) {
                   <option value="admin">Administrator</option>
                   <option value="pimpinan">Pimpinan</option>
                 </select>
+              </div>
+
+              <div className="md:col-span-1">
+                <label className="block text-sm font-medium text-[#111827] mb-2">
+                  Latitude Rumah (untuk Absensi Jumat)
+                </label>
+                <input
+                  type="text"
+                  name="home_latitude"
+                  value={formData.home_latitude}
+                  onChange={handleChange}
+                  placeholder="Contoh: -0.883806"
+                  className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#111827] outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]"
+                />
+              </div>
+
+              <div className="md:col-span-1">
+                <label className="block text-sm font-medium text-[#111827] mb-2">
+                  Longitude Rumah (untuk Absensi Jumat)
+                </label>
+                <input
+                  type="text"
+                  name="home_longitude"
+                  value={formData.home_longitude}
+                  onChange={handleChange}
+                  placeholder="Contoh: 131.295786"
+                  className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#111827] outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]"
+                />
               </div>
             </div>
           </div>

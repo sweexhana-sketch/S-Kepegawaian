@@ -1,14 +1,28 @@
 import { useState, useEffect } from "react";
 import useUser from "@/utils/useUser";
-import useUpload from "@/utils/useUpload";
-import AppLayout from "@/utils/AppLayout";
-import { FolderOpen, Upload, FileText, CheckCircle2, Clock, AlertCircle, Search, Trash2, Eye, Plus } from "lucide-react";
+import Sidebar from "@/components/Sidebar";
+import { 
+  FolderOpen, 
+  Upload, 
+  FileText, 
+  CheckCircle2, 
+  Clock, 
+  AlertCircle, 
+  Search, 
+  Trash2, 
+  Eye, 
+  Plus,
+  Filter,
+  Download,
+  MoreVertical,
+  ShieldCheck
+} from "lucide-react";
 
 const KATEGORI_LIST = ["Identitas", "Kepegawaian", "Pendidikan", "Kompetensi"];
 const STATUS_CONFIG = {
-  verified: { label: "Terverifikasi", className: "bg-[#ECFDF5] text-[#059669]", icon: CheckCircle2 },
-  pending: { label: "Menunggu Verifikasi", className: "bg-[#FEF3C7] text-[#B45309]", icon: Clock },
-  rejected: { label: "Ditolak", className: "bg-[#FEF2F2] text-[#DC2626]", icon: AlertCircle },
+  verified: { label: "Terverifikasi", className: "bg-emerald-50 text-emerald-600", icon: CheckCircle2 },
+  pending: { label: "Menunggu", className: "bg-amber-50 text-amber-600", icon: Clock },
+  rejected: { label: "Ditolak", className: "bg-rose-50 text-rose-600", icon: AlertCircle },
 };
 
 export default function DossierPage() {
@@ -20,16 +34,29 @@ export default function DossierPage() {
   const [filterKategori, setFilterKategori] = useState("");
 
   useEffect(() => {
-    if (!userLoading && !user) { window.location.href = "/account/signin"; return; }
     if (user) fetchProfile();
-  }, [user, userLoading]);
+  }, [user]);
 
-  useEffect(() => { if (pegawai) fetchDokumen(); }, [pegawai, filterKategori]);
+  useEffect(() => {
+    if (pegawai) fetchDokumen();
+  }, [pegawai, filterKategori]);
 
   const fetchProfile = async () => {
-    const res = await fetch("/api/pegawai/profile");
-    if (res.status === 404) { window.location.href = "/onboarding"; return; }
-    if (res.ok) { const d = await res.json(); setPegawai(d.pegawai); }
+    try {
+      const res = await fetch("/api/pegawai/profile");
+      if (res.status === 404) {
+        window.location.href = "/onboarding";
+        return;
+      }
+      if (res.ok) {
+        const d = await res.json();
+        setPegawai(d.pegawai);
+      } else if (res.status === 401) {
+        window.location.href = "/account/signin";
+      }
+    } catch (err) {
+      console.error("Error fetching profile:", err);
+    }
   };
 
   const fetchDokumen = async () => {
@@ -38,8 +65,13 @@ export default function DossierPage() {
       const params = new URLSearchParams();
       if (filterKategori) params.append("kategori", filterKategori);
       const res = await fetch(`/api/dossier/list?${params}`);
-      if (res.ok) { const d = await res.json(); setDokumen(d.dokumen || []); }
-    } finally { setLoading(false); }
+      if (res.ok) {
+        const d = await res.json();
+        setDokumen(d.dokumen || []);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDelete = async (id) => {
@@ -60,127 +92,175 @@ export default function DossierPage() {
     rejected: dokumen.filter(d => d.status === "rejected").length,
   };
 
-  if (userLoading || !pegawai) return <div className="flex min-h-screen items-center justify-center bg-[#F9FAFB]"><div className="text-sm text-[#6B7280]">Memuat...</div></div>;
+  if (userLoading || !pegawai) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC]">
+        <div className="animate-pulse flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Sinkronisasi Dossier...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <AppLayout pegawai={pegawai} activeHref="/dossier">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-semibold text-[#111827] tracking-tight mb-1">Digital Dossier</h2>
-          <p className="text-sm text-[#6B7280]">Arsip digital dokumen kepegawaian</p>
-        </div>
-        <a href="/dossier/upload" className="inline-flex items-center gap-2 px-4 py-2 bg-[#2563EB] text-white text-sm font-medium rounded-lg hover:bg-[#1D4ED8] transition-colors">
-          <Upload size={16} /> Upload Dokumen
-        </a>
-      </div>
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col lg:flex-row">
+      <Sidebar activePage="dossier" />
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        {[
-          { label: "Total Dokumen", value: stats.total, className: "bg-[#EFF6FF] text-[#2563EB]" },
-          { label: "Terverifikasi", value: stats.verified, className: "bg-[#ECFDF5] text-[#059669]" },
-          { label: "Menunggu", value: stats.pending, className: "bg-[#FEF3C7] text-[#B45309]" },
-          { label: "Ditolak", value: stats.rejected, className: "bg-[#FEF2F2] text-[#DC2626]" },
-        ].map(s => (
-          <div key={s.label} className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-            <p className="text-xs text-[#6B7280] mb-1">{s.label}</p>
-            <p className={`text-2xl font-bold ${s.className.split(" ")[1]}`}>{s.value}</p>
+      <main className="flex-1 lg:ml-72 p-4 md:p-8 pt-24 lg:pt-8 transition-all duration-300">
+        {/* Header */}
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+          <div>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tighter">Digital Dossier</h2>
+            <p className="text-slate-500 text-sm font-medium">Arsip digital dokumen kepegawaian yang terorganisir.</p>
           </div>
-        ))}
-      </div>
 
-      {/* Filter */}
-      <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-6 flex flex-wrap gap-4 items-center">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF]" />
-          <input type="text" placeholder="Cari dokumen..." value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#111827] outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]" />
+          <div className="flex items-center gap-4">
+            <a
+              href="/dossier/upload"
+              className="inline-flex items-center gap-3 px-6 py-3 bg-blue-600 text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all active:scale-95"
+            >
+              <Upload size={18} />
+              Upload Dokumen
+            </a>
+          </div>
+        </header>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+           {[
+             { label: "Total Arsip", value: stats.total, color: "slate", icon: FolderOpen },
+             { label: "Terverifikasi", value: stats.verified, color: "emerald", icon: ShieldCheck },
+             { label: "Menunggu", value: stats.pending, color: "amber", icon: Clock },
+             { label: "Ditolak", value: stats.rejected, color: "rose", icon: AlertCircle },
+           ].map((s) => (
+             <div key={s.label} className="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm group hover:-translate-y-1 transition-all">
+                <div className={`w-10 h-10 rounded-xl bg-${s.color}-50 flex items-center justify-center text-${s.color}-600 mb-6 group-hover:scale-110 transition-transform`}>
+                   <s.icon size={20} />
+                </div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{s.label}</p>
+                <h3 className="text-2xl font-black text-slate-900">{s.value}</h3>
+             </div>
+           ))}
         </div>
-        <select value={filterKategori} onChange={e => setFilterKategori(e.target.value)} className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#111827] outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]">
-          <option value="">Semua Kategori</option>
-          {KATEGORI_LIST.map(k => <option key={k} value={k}>{k}</option>)}
-        </select>
-      </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
-        {loading ? (
-          <div className="px-4 py-12 text-center text-sm text-[#6B7280]">Memuat dokumen...</div>
-        ) : filtered.length === 0 ? (
-          <div className="px-4 py-16 text-center">
-            <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-4"><FolderOpen size={32} className="text-[#9CA3AF]" /></div>
-            <p className="text-sm font-medium text-[#111827] mb-1">{search || filterKategori ? "Dokumen tidak ditemukan" : "Belum ada dokumen"}</p>
-            {!search && !filterKategori && (
-              <a href="/dossier/upload" className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-[#2563EB] text-white text-sm rounded-lg hover:bg-[#1D4ED8]">
-                <Upload size={16} /> Upload Dokumen Pertama
+        {/* Search & Filter */}
+        <div className="bg-white rounded-3xl border border-slate-200 p-4 mb-8 flex flex-col md:flex-row gap-4 items-center shadow-sm">
+          <div className="relative flex-1 w-full">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <input
+              type="text"
+              placeholder="Cari nama dokumen atau deskripsi..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-12 pr-6 py-3 bg-slate-50 border-transparent rounded-2xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-blue-500/10 transition-all outline-none"
+            />
+          </div>
+          <div className="flex items-center gap-3">
+             <select 
+               value={filterKategori} 
+               onChange={e => setFilterKategori(e.target.value)} 
+               className="bg-white px-6 py-3 rounded-2xl text-xs font-black text-slate-600 uppercase tracking-widest border border-slate-200 outline-none focus:border-blue-600 transition-all"
+             >
+                <option value="">Semua Kategori</option>
+                {KATEGORI_LIST.map(k => <option key={k} value={k}>{k}</option>)}
+             </select>
+             <button className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-500 hover:text-blue-600 transition-colors">
+               <Download size={20} />
+             </button>
+          </div>
+        </div>
+
+        {/* Document Content */}
+        <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm">
+          {loading ? (
+             <div className="py-24 text-center opacity-30">
+                <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-[10px] font-black uppercase tracking-widest">Memuat...</p>
+             </div>
+          ) : filtered.length === 0 ? (
+            <div className="py-24 text-center px-6">
+              <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                 <FolderOpen size={48} className="text-slate-200" />
+              </div>
+              <h3 className="text-lg font-black text-slate-900 mb-1">Dossier Kosong</h3>
+              <p className="text-slate-500 text-sm max-w-xs mx-auto mb-8 font-medium">Mulai dengan mengunggah dokumen digital pertama Anda untuk pengarsipan mandiri.</p>
+              <a href="/dossier/upload" className="inline-flex items-center gap-3 px-6 py-3 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-blue-600 transition-all">
+                 Unggah Dokumen <Upload size={14} />
               </a>
-            )}
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
-                  {pegawai.role === "admin" && <th className="px-4 py-3 text-left text-xs font-medium text-[#6B7280] uppercase">Pegawai</th>}
-                  <th className="px-4 py-3 text-left text-xs font-medium text-[#6B7280] uppercase">Dokumen</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-[#6B7280] uppercase">Kategori</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-[#6B7280] uppercase">Tgl Upload</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-[#6B7280] uppercase">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-[#6B7280] uppercase">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#E5E7EB]">
-                {filtered.map(doc => {
-                  const conf = STATUS_CONFIG[doc.status] || STATUS_CONFIG.pending;
-                  const Icon = conf.icon;
-                  return (
-                    <tr key={doc.id} className="hover:bg-[#F9FAFB] transition-colors group">
-                      {pegawai.role === "admin" && (
-                        <td className="px-4 py-3 text-sm text-[#111827]">{doc.nama_lengkap}<br /><span className="text-xs text-[#6B7280] font-mono">{doc.nip}</span></td>
-                      )}
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 bg-[#EFF6FF] rounded-lg flex items-center justify-center flex-shrink-0">
-                            <FileText size={16} className="text-[#2563EB]" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-[#111827]">{doc.jenis_dokumen}</p>
-                            {doc.deskripsi && <p className="text-xs text-[#6B7280] line-clamp-1">{doc.deskripsi}</p>}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="px-2.5 py-1 bg-[#F3F4F6] text-[#374151] text-xs rounded-full">{doc.kategori}</span>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-[#6B7280]">
-                        {new Date(doc.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${conf.className}`}>
-                          <Icon size={12} />{conf.label}
-                        </span>
-                        {doc.status === "rejected" && doc.catatan && (
-                          <p className="text-[10px] text-[#DC2626] mt-1 max-w-[120px] line-clamp-1">{doc.catatan}</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/50">
+                    {pegawai.role === "admin" && <th className="px-8 py-5">Pegawai</th>}
+                    <th className="px-8 py-5">Dokumen</th>
+                    <th className="px-8 py-5">Kategori</th>
+                    <th className="px-8 py-5">Tgl Upload</th>
+                    <th className="px-8 py-5">Status</th>
+                    <th className="px-8 py-5 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {filtered.map(doc => {
+                    const conf = STATUS_CONFIG[doc.status] || STATUS_CONFIG.pending;
+                    const Icon = conf.icon;
+                    return (
+                      <tr key={doc.id} className="group hover:bg-slate-50/50 transition-colors">
+                        {pegawai.role === "admin" && (
+                          <td className="px-8 py-6">
+                             <p className="font-bold text-slate-900">{doc.nama_lengkap}</p>
+                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">{doc.nip}</p>
+                          </td>
                         )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {doc.file_url && (
-                            <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="p-1.5 hover:bg-[#EFF6FF] rounded transition-colors" title="Lihat"><Eye size={16} className="text-[#6B7280]" /></a>
-                          )}
-                          <button onClick={() => handleDelete(doc.id)} className="p-1.5 hover:bg-[#FEF2F2] rounded transition-colors" title="Hapus">
-                            <Trash2 size={16} className="text-[#6B7280] hover:text-[#DC2626]" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    </AppLayout>
+                        <td className="px-8 py-6">
+                           <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                                 <FileText size={24} />
+                              </div>
+                              <div>
+                                 <p className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{doc.jenis_dokumen}</p>
+                                 {doc.deskripsi && <p className="text-[10px] font-medium text-slate-400 mt-0.5 line-clamp-1">{doc.deskripsi}</p>}
+                              </div>
+                           </div>
+                        </td>
+                        <td className="px-8 py-6">
+                           <div className="inline-flex items-center px-3 py-1 bg-slate-100 rounded-xl text-[10px] font-black text-slate-600 uppercase tracking-widest">
+                              {doc.kategori}
+                           </div>
+                        </td>
+                        <td className="px-8 py-6">
+                           <p className="text-xs font-bold text-slate-500">
+                             {new Date(doc.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+                           </p>
+                        </td>
+                        <td className="px-8 py-6">
+                          <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${conf.className}`}>
+                            <Icon size={12} />{conf.label}
+                          </span>
+                        </td>
+                        <td className="px-8 py-6 text-right">
+                          <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {doc.file_url && (
+                              <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="p-2.5 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded-xl transition-colors">
+                                 <Eye size={20} />
+                              </a>
+                            )}
+                            <button onClick={() => handleDelete(doc.id)} className="p-2.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-xl transition-colors">
+                               <Trash2 size={20} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
   );
 }

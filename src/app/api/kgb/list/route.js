@@ -18,22 +18,22 @@ export async function GET(request) {
       rows = await sql`
         SELECT k.*, p.nama_lengkap, p.nip, p.jabatan, p.unit_kerja, p.golongan
         FROM kgb k JOIN pegawai p ON k.pegawai_id = p.id
-        ORDER BY k.tmt_kgb_baru ASC
+        ORDER BY k.tanggal_kgb_berikutnya ASC
       `;
     } else {
       rows = await sql`
         SELECT k.*, p.nama_lengkap, p.nip FROM kgb k
         JOIN pegawai p ON k.pegawai_id = p.id
         WHERE k.pegawai_id = ${pegawai.id}
-        ORDER BY k.tmt_kgb_baru DESC
+        ORDER BY k.tanggal_kgb_berikutnya DESC
       `;
     }
 
     // Flag yang akan segera KGB dalam 3 bulan
     const enriched = rows.map(k => ({
       ...k,
-      is_upcoming: k.tmt_kgb_baru && new Date(k.tmt_kgb_baru) <= threeMonthsLater && new Date(k.tmt_kgb_baru) >= today,
-      is_overdue: k.tmt_kgb_baru && new Date(k.tmt_kgb_baru) < today && k.status === 'pending',
+      is_upcoming: k.tanggal_kgb_berikutnya && new Date(k.tanggal_kgb_berikutnya) <= threeMonthsLater && new Date(k.tanggal_kgb_berikutnya) >= today,
+      is_overdue: k.tanggal_kgb_berikutnya && new Date(k.tanggal_kgb_berikutnya) < today && k.status === 'pending',
     }));
 
     const upcoming = enriched.filter(k => k.is_upcoming || k.is_overdue);
