@@ -45,17 +45,21 @@ export default function SignInPage() {
         <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#FFCC00]/10 rounded-full blur-[120px]"></div>
         <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-white/5 rounded-full blur-[100px]"></div>
         
-        {/* Tiled Pattern - PUPR Gear Logo */}
-        <div 
-          className="absolute inset-0 opacity-[0.2]"
-          style={{
-            backgroundImage: `url('https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Logo_PUPR.png/512px-Logo_PUPR.png')`,
-            backgroundSize: '240px',
-            backgroundRepeat: 'repeat',
-            filter: 'brightness(0) invert(1)',
-            pointerEvents: 'none'
-          }}
-        ></div>
+        {/* Tiled Pattern - Tilted PUPR Logo + Text */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div 
+            className="absolute opacity-[0.15]"
+            style={{
+              top: '-50%', left: '-50%', width: '200%', height: '200%',
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='120'%3E%3Cimage href='https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Logo_PUPR.png/512px-Logo_PUPR.png' x='20' y='20' width='80' height='80'/%3E%3Ctext x='115' y='60' font-family='Arial, sans-serif' font-weight='900' font-size='42' fill='black'%3EPUPR%3C/text%3E%3Ctext x='115' y='78' font-family='Arial, sans-serif' font-weight='700' font-size='10' fill='black' letter-spacing='0.5'%3EKEMENTERIAN PEKERJAAN UMUM%3C/text%3E%3Ctext x='115' y='92' font-family='Arial, sans-serif' font-weight='700' font-size='10' fill='black' letter-spacing='0.5'%3EDAN PERUMAHAN RAKYAT%3C/text%3E%3C/svg%3E")`,
+              backgroundSize: '320px',
+              backgroundRepeat: 'repeat',
+              transform: 'rotate(-25deg)',
+              filter: 'brightness(0) invert(1)',
+              pointerEvents: 'none'
+            }}
+          ></div>
+        </div>
       </div>
 
       <form
